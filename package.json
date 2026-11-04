@@ -1,0 +1,32 @@
+{
+  "name": "node.js---blog",
+  "version": "1.0.0",
+  "description": "Blog basado en node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Enderc85/Node.js---Blog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Enderc85/Node.js---Blog/issues"
+  },
+  "homepage": "https://github.com/Enderc85/Node.js---Blog#readme",
+  "dependencies": {
+    "@prisma/client": "^7.10.1",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.10.1"
+  }
+}
