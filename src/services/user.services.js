@@ -16,8 +16,16 @@ const getUserById = async (id) => {
     });
 };
 
+// NUEVO: buscar usuario por email (necesario para login y para comprobar si ya existe en register)
+const getUserByEmail = async (email) => {
+    return await prisma.user.findUnique({
+        where: { email },
+    });
+};
+
 module.exports = {
     getAllUsers,
     createUser,
     getUserById,
+    getUserByEmail,  // <-- NUEVO
 };

@@ -1,0 +1,285 @@
+<%- include('partials/header') %>
+
+<div id="index" class="modern-page blog-feed-page">
+
+    <!-- 1. Recomendaciones / Destacados Reales -->
+    <% if (typeof featuredPosts !== 'undefined' && featuredPosts.length > 0) { %>
+        <section class="recommendations-section">
+            <div class="section-container">
+                <div class="section-header-compact">
+                    <div class="header-tag">
+                        <i class="fa-solid fa-sparkles"></i>
+                        <span>Recomendado para ti</span>
+                    </div>
+                    <h2 class="section-title-sm">Historias Destacadas</h2>
+                </div>
+
+                <div class="recommendations-slider">
+                    <% featuredPosts.forEach(feat => { %>
+                        <% const featAuthorSlug = feat.author ? (feat.author.name || feat.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
+                        <a href="/posts/<%= featAuthorSlug %>/<%= feat.id %>" class="recommendation-card-link" style="text-decoration: none;">
+                            <article class="recommendation-card">
+                                <img src="<%= feat.image || 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=700&q=80' %>" alt="<%= feat.title %>" class="rec-card-img">
+                                <div class="rec-card-overlay">
+                                    <span class="rec-badge">Destacado</span>
+                                    <h3><%= feat.title %></h3>
+                                    <p class="rec-meta">Por <%= feat.author ? feat.author.name : 'Anónimo' %> &bull; <%= feat.numLikes %> me gusta</p>
+                                </div>
+                            </article>
+                        </a>
+                    <% }); %>
+                </div>
+            </div>
+        </section>
+    <% } %>
+
+    <!-- 2. Contenedor Principal: Feed Central + Barra Lateral Derecha -->
+    <main class="feed-layout-container">
+
+        <!-- Columna Central: Infinite Scroll Feed -->
+        <section class="feed-main-column">
+            <div class="feed-header-bar">
+                <h3>Últimas Publicaciones</h3>
+            </div>
+
+            <!-- Contenedor donde se cargan los posts -->
+            <div id="posts-container" class="posts-stream">
+                <% if (typeof posts !== 'undefined' && posts.length > 0) { %>
+                    <% posts.forEach(post => { %>
+                        <% const authorSlug = post.author ? (post.author.name || post.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
+                        <article class="post-item-card">
+                            <div class="post-author-row">
+                                <div class="author-avatar-placeholder">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div class="author-info">
+                                    <span class="author-name"><%= post.author ? post.author.name : 'Anónimo' %></span>
+                                    <span class="post-time"><%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+                                </div>
+                            </div>
+
+                            <a href="/posts/<%= authorSlug %>/<%= post.id %>" class="post-title-link">
+                                <h2 class="post-title"><%= post.title %></h2>
+                            </a>
+
+                            <p class="post-excerpt">
+                                <%= post.content.length > 200 ? post.content.slice(0, 200) + '...' : post.content %>
+                            </p>
+
+                            <% if (post.image) { %>
+                                <div class="post-media-frame">
+                                    <a href="/posts/<%= authorSlug %>/<%= post.id %>">
+                                        <img src="<%= post.image %>" alt="<%= post.title %>" class="post-image" loading="lazy">
+                                    </a>
+                                </div>
+                            <% } %>
+
+                            <div class="post-interactions">
+                                <div class="interaction-group">
+                                    <button class="interaction-btn like-btn" onclick="toggleLike(this, <%= post.numLikes || 0 %>)">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span><%= post.numLikes || 0 %></span>
+                                    </button>
+                                    <a href="/posts/<%= authorSlug %>/<%= post.id %>" class="interaction-btn">
+                                        <i class="fa-regular fa-comment"></i>
+                                        <span><%= post.numComments || 0 %></span>
+                                    </a>
+                                </div>
+                                <a href="/posts/<%= authorSlug %>/<%= post.id %>" class="read-more-link">
+                                    <span>Leer artículo</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </article>
+                    <% }); %>
+                <% } else { %>
+                    <!-- Estado vacío cuando no hay posts -->
+                    <div class="empty-state-card">
+                        <div class="empty-icon-circle">
+                            <i class="fa-regular fa-folder-open"></i>
+                        </div>
+                        <h3>¡No hay nada que mostrar!</h3>
+                        <p>Todavía no se ha publicado ningún post en el blog. Vuelve más tarde o sé el primero en compartir una historia.</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Loader y Sentinel para Infinite Scroll (solo si hay posts) -->
+            <% if (typeof posts !== 'undefined' && posts.length > 0) { %>
+                <div id="infinite-scroll-trigger" class="scroll-trigger-wrapper">
+                    <div class="loading-spinner" id="feed-spinner" style="<%= (typeof hasMore !== 'undefined' && !hasMore) ? 'display: none;' : '' %>">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Cargando más publicaciones...</span>
+                    </div>
+                    <div id="no-more-posts" class="end-of-feed-msg" style="<%= (typeof hasMore !== 'undefined' && !hasMore) ? 'display: flex;' : 'display: none;' %>">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Estás al día con todas las publicaciones</span>
+                    </div>
+                </div>
+            <% } %>
+        </section>
+
+        <!-- Columna Lateral Derecha (Sticky): Posts Recientes Reales -->
+        <aside class="feed-sidebar-column">
+            <div class="sidebar-sticky-panel">
+                <div class="sidebar-widget">
+                    <div class="widget-header">
+                        <span class="widget-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                        <h4>Posts Recientes</h4>
+                    </div>
+
+                    <div class="recent-posts-list">
+                        <% if (typeof recentPosts !== 'undefined' && recentPosts.length > 0) { %>
+                            <% recentPosts.forEach(recent => { %>
+                                <% const recAuthorSlug = recent.author ? (recent.author.name || recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
+                                <a href="/posts/<%= recAuthorSlug %>/<%= recent.id %>" class="recent-post-item">
+                                    <% if (recent.image) { %>
+                                        <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb">
+                                    <% } %>
+                                    <div class="recent-post-meta">
+                                        <h5><%= recent.title %></h5>
+                                        <span class="recent-post-date"><i class="fa-regular fa-clock"></i> <%= new Date(recent.createdAt).toLocaleDateString('es-ES') %></span>
+                                    </div>
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">¡No hay nada que mostrar!</p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Newsletter compacta lateral -->
+                <div class="sidebar-widget newsletter-widget">
+                    <h4>No te pierdas nada</h4>
+                    <p>Suscríbete a nuestra newsletter de fotografía y novedades del blog.</p>
+                    <form class="sidebar-newsletter-form" onsubmit="event.preventDefault(); alert('¡Gracias por suscribirte!');">
+                        <input type="email" placeholder="Tu correo electrónico..." required>
+                        <button type="submit"><i class="fa-solid fa-arrow-right"></i></button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+</div>
+
+<!-- Script del Infinite Scroll con posts reales -->
+<script>
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMorePosts = <%= (typeof hasMore !== 'undefined' && hasMore) ? 'true' : 'false' %>;
+
+    const postsContainer = document.getElementById('posts-container');
+    const trigger = document.getElementById('infinite-scroll-trigger');
+    const spinner = document.getElementById('feed-spinner');
+    const noMore = document.getElementById('no-more-posts');
+
+    function createPostElement(post) {
+        const article = document.createElement('article');
+        article.className = 'post-item-card fade-in-post';
+        article.innerHTML = `
+            <div class="post-author-row">
+                <div class="author-avatar-placeholder">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="author-info">
+                    <span class="author-name">${post.author}</span>
+                    <span class="post-time">${post.date}</span>
+                </div>
+            </div>
+            <a href="${post.url}" class="post-title-link">
+                <h2 class="post-title">${post.title}</h2>
+            </a>
+            <p class="post-excerpt">${post.excerpt}</p>
+            ${post.image ? `
+                <div class="post-media-frame">
+                    <a href="${post.url}">
+                        <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
+                    </a>
+                </div>
+            ` : ''}
+            <div class="post-interactions">
+                <div class="interaction-group">
+                    <button class="interaction-btn like-btn" onclick="toggleLike(this, ${post.likes})">
+                        <i class="fa-regular fa-heart"></i>
+                        <span>${post.likes}</span>
+                    </button>
+                    <a href="${post.url}" class="interaction-btn">
+                        <i class="fa-regular fa-comment"></i>
+                        <span>${post.comments}</span>
+                    </a>
+                </div>
+                <a href="${post.url}" class="read-more-link">
+                    <span>Leer artículo</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        `;
+        return article;
+    }
+
+    async function loadMorePosts() {
+        if (isLoading || !hasMorePosts) return;
+        isLoading = true;
+        if (spinner) spinner.style.display = 'flex';
+
+        try {
+            currentPage++;
+            const response = await fetch(`/api/posts/feed?page=${currentPage}&limit=3`);
+            const data = await response.json();
+
+            if (data.posts && data.posts.length > 0) {
+                data.posts.forEach(post => {
+                    postsContainer.appendChild(createPostElement(post));
+                });
+            }
+
+            hasMorePosts = data.hasMore;
+
+            if (!hasMorePosts) {
+                if (spinner) spinner.style.display = 'none';
+                if (noMore) noMore.style.display = 'flex';
+                if (observer) observer.disconnect();
+            }
+        } catch (error) {
+            console.error('Error cargando posts:', error);
+        } finally {
+            isLoading = false;
+            if (hasMorePosts && spinner) {
+                spinner.style.display = 'none';
+            }
+        }
+    }
+
+    let observer = null;
+    if (trigger && hasMorePosts) {
+        observer = new IntersectionObserver((entries) => {
+            const firstEntry = entries[0];
+            if (firstEntry.isIntersecting && hasMorePosts && !isLoading) {
+                loadMorePosts();
+            }
+        }, {
+            rootMargin: '250px'
+        });
+        observer.observe(trigger);
+    }
+
+    function toggleLike(btn, initialCount) {
+        const icon = btn.querySelector('i');
+        const countSpan = btn.querySelector('span');
+        const isLiked = icon.classList.contains('fa-solid');
+
+        if (isLiked) {
+            icon.classList.remove('fa-solid', 'text-danger');
+            icon.classList.add('fa-regular');
+            countSpan.textContent = parseInt(countSpan.textContent) - 1;
+        } else {
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid', 'text-danger');
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

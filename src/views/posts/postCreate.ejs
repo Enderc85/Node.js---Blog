@@ -1,0 +1,35 @@
+<%include('.. /partials/header') %>
+
+    <div class="main-content">
+        <div class="container" style="max-width: 800px;">
+            <h1 class="text-center mb-4">Crear Nuevo Post</h1>
+
+            <% if (messages.error) { %>
+                <div class="alert alert-danger" role="alert">
+                    <%= messages.error %>
+                </div>
+                <% } %>
+
+                    <form action="/posts" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Contenido</label>
+                            <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Imagen Destacada</label>
+                            <input class="form-control" type="file" id="image" name="image" accept="image/*" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isFeatured" name="isFeatured">
+                            <label class="form-check-label" for="isFeatured">Destacar en portada</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Publicar</button>
+                    </form>
+        </div>
+    </div>
+
+    <%include('.. /partials/footer') %>

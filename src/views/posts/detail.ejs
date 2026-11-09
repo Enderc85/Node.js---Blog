@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+
+<div class="modern-page post-detail-page">
+    <div class="post-detail-container">
+        <!-- Columna del artículo principal -->
+        <article class="post-main-content">
+            <header class="post-detail-header">
+                <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
+                <h1 class="post-detail-title"><%= post.title %></h1>
+                <div class="post-meta-row">
+                    <span class="meta-item"><i class="fa-regular fa-user"></i> <%= post.author ? (post.author.name || post.author.email.split('@')[0]) : 'Anónimo' %></span>
+                    <span class="meta-item"><i class="fa-regular fa-calendar"></i> <%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+                    <span class="meta-item"><i class="fa-regular fa-heart"></i> <%= post.numLikes || 0 %> Me gusta</span>
+                </div>
+            </header>
+
+            <% if (post.image) { %>
+                <div class="post-detail-image-wrapper">
+                    <img src="<%= post.image %>" alt="<%= post.title %>" class="post-detail-image">
+                </div>
+            <% } %>
+
+            <div class="post-detail-body">
+                <%- post.content.replace(/\n/g, '<br>') %>
+            </div>
+
+            <footer class="post-detail-footer">
+                <div class="post-share-actions">
+                    <span>Compartir este post:</span>
+                    <button class="share-icon-btn" title="Copiar enlace" onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!');">
+                        <i class="fa-solid fa-link"></i>
+                    </button>
+                </div>
+            </footer>
+        </article>
+
+        <!-- Barra lateral con posts recientes -->
+        <aside class="post-detail-sidebar">
+            <div class="sidebar-widget">
+                <div class="widget-header">
+                    <span class="widget-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                    <h4>Otros artículos</h4>
+                </div>
+                <div class="recent-posts-list">
+                    <% if (typeof recentPosts !== 'undefined' && recentPosts.length > 0) { %>
+                        <% recentPosts.forEach(recent => { %>
+                            <% const authorSlug = recent.author ? (recent.author.name || recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
+                            <a href="/posts/<%= authorSlug %>/<%= recent.id %>" class="recent-post-item">
+                                <% if (recent.image) { %>
+                                    <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb">
+                                <% } %>
+                                <div class="recent-post-meta">
+                                    <h5><%= recent.title %></h5>
+                                    <span class="recent-post-date"><i class="fa-regular fa-clock"></i> <%= new Date(recent.createdAt).toLocaleDateString('es-ES') %></span>
+                                </div>
+                            </a>
+                        <% }); %>
+                    <% } else { %>
+                        <p style="color: #94a3b8; font-size: 0.85rem;">No hay artículos recientes.</p>
+                    <% } %>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

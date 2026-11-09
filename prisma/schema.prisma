@@ -1,18 +1,73 @@
-datasource db {
-  provider = "postgresql" 
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+
+  @@map("users")
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String
+  content     String
+  image       String?
+  slug        String    @unique
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  numLikes    Int       @default(0)
+  numComments Int       @default(0)
+  contacts    Contact[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  @@map("comments")
+}
+
+model Images {
+  id       Int    @id @default(autoincrement())
+  url      String
+  category String
+
+  @@map("images")
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  published DateTime @default(now())
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@map("contacts")
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+ 
+  @@map("categories")
 }

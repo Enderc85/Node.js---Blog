@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'Node.js Blog' %>
+    </title>
+
+    <!-- FontAwesome 6 y Estilos Modernos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/modern-index.css">
+</head>
+
+<body>
+
+    <!-- Header / Navbar Principal (Desktop & Tablet) -->
+    <header class="main-site-header">
+        <div class="header-inner">
+            <!-- Logo / Marca -->
+            <a href="/" class="header-logo">
+                <span class="logo-icon"><i class="fa-solid fa-camera-retro"></i></span>
+                <span class="logo-text">Lumina<strong>Blog</strong></span>
+            </a>
+
+            <!-- Enlaces de navegación desktop -->
+            <nav class="desktop-nav">
+                <a href="/"
+                    class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/') ? 'active' : '' %>">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/about"
+                    class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/about') ? 'active' : '' %>">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>About</span>
+                </a>
+                <a href="/contact"
+                    class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/contact') ? 'active' : '' %>">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Contact Us</span>
+                </a>
+            </nav>
+
+            <!-- Acciones de Usuario (Login / Register o Perfil) -->
+            <div class="header-auth-actions">
+                <% if (typeof user !=='undefined' && user) { %>
+                    <!-- Usuario logueado -->
+                    <div class="create-post" id="create-post">
+                        <i class="fa-solid fa-plus"></i>
+                        <a href="/create-post"
+                            class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/create-post') ? 'active' : '' %>">Crear
+                            post</a>
+                    </div>
+                    <div class="user-pill">
+                        <i class="fa-regular fa-user"></i>
+                        <span>
+                            <%= user.email.split('@')[0] %>
+                        </span>
+                    </div>
+                    <form action="/api/auth/logout" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn-nav-logout" title="Cerrar sesión">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </form>
+                    <% } else { %>
+                        <!-- Usuario NO logueado -->
+                        <a href="/login"
+                            class="btn-nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/login') ? 'active' : '' %>">
+                            Iniciar sesión
+                        </a>
+                        <a href="/register"
+                            class="btn-nav-primary <%= (typeof currentPath !== 'undefined' && currentPath === '/register') ? 'active' : '' %>">
+                            Registrarse
+                        </a>
+                        <% } %>
+            </div>
+        </div>
+    </header>
