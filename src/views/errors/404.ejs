@@ -1,15 +1,21 @@
 <%- include('../partials/header') %>
 
-<div class="error-page">
-    <div class="error-card">
-        <span class="error-code">404</span>
-        <h1>Página no encontrada</h1>
-        <p><%= typeof message !== 'undefined' ? message : 'La página que buscas no existe o ha sido movida.' %></p>
-        <a href="/" class="btn-post-primary">
-            <i class="fa-solid fa-house"></i>
-            <span>Volver al inicio</span>
-        </a>
+    <div class="error-page">
+        <div class="error-card">
+            <div class="icon-user-lock">
+                <i class="fa-solid fa-file-circle-xmark"></i>
+            </div>
+            <br>
+            <span class="error-code">404</span>
+            <h1>Página no encontrada</h1>
+            <p>
+                <%= typeof message !=='undefined' ? message : 'La página que buscas no existe o ha sido movida.' %>
+            </p>
+            <a href="/" class="btn-post-primary">
+                <i class="fa-solid fa-house"></i>
+                <span>Volver al inicio</span>
+            </a>
+        </div>
     </div>
-</div>
 
-<%- include('../partials/footer') %>
+    <%- include('../partials/footer') %>

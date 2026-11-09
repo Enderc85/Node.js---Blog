@@ -1,15 +1,23 @@
 <%- include('../partials/header') %>
 
-<div class="error-page">
-    <div class="error-card">
-        <span class="error-code">403</span>
-        <h1>Acceso denegado</h1>
-        <p><%= typeof message !== 'undefined' ? message : 'No tienes permisos para ver esta página.' %></p>
-        <a href="/" class="btn-post-primary">
-            <i class="fa-solid fa-house"></i>
-            <span>Volver al inicio</span>
-        </a>
-    </div>
-</div>
+    <div class="error-page">
+        <div class="error-card">
+            <div class="icon-user-lock">
+                <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <br>
+            <span class="error-code">403</span>
+            <h1>Acceso denegado</h1>
+            <p>
+                <%= typeof message !=='undefined' ? message : 'No tienes permisos para ver esta página.' %>
+            </p>
 
-<%- include('../partials/footer') %>
+            <a href="/" class="btn-post-primary">
+                <i class="fa-solid fa-house"></i>
+
+                <span>Volver al inicio</span>
+            </a>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

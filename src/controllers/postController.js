@@ -25,7 +25,7 @@ const getPostByUserAndId = async (req, res) => {
         const { username, id } = req.params;
 
         if (isNaN(id)) {
-            return res.status(404).render('404', {
+            return res.status(404).render('errors/404', {
                 title: 'Artículo no encontrado',
                 message: 'El identificador del post debe ser un número válido.'
             });
@@ -38,7 +38,7 @@ const getPostByUserAndId = async (req, res) => {
         );
 
         if (!post) {
-            return res.status(404).render('404', {
+            return res.status(404).render('errors/404', {
                 title: 'Artículo no encontrado',
                 message: `No se encontró ningún artículo con ID #${id} perteneciente al autor "${username}".`
             });
