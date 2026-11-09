@@ -19,6 +19,7 @@
         <% } %>
 
         <form action="/login" method="POST" class="auth-form" id="loginForm">
+            <input type="hidden" name="next" value="<%= typeof next !== 'undefined' ? next : '/' %>">
             <div class="form-group">
                 <label for="email">Correo electrónico</label>
                 <div class="input-wrapper">
@@ -72,8 +73,5 @@
         }
     }
 </script>
-</body>
-</html>
-
 </body>
 </html>

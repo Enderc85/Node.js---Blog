@@ -7,14 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
   password  String?
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]
+  comments  Comment[]
+  likes     Like[]
 
   @@map("users")
 }
@@ -32,17 +40,49 @@ model Post {
   numLikes    Int       @default(0)
   numComments Int       @default(0)
   contacts    Contact[]
+  images      PostImage[]
+  comments    Comment[]
+  likes       Like[]
 
   @@map("posts")
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  position  Int      @default(0)
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("post_images")
 }
 
 model Comment {
   id        Int      @id @default(autoincrement())
   content   String
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([postId])
   @@map("comments")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@map("likes")
 }
 
 model Images {

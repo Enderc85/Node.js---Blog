@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+
+<div class="error-page">
+    <div class="error-card">
+        <span class="error-code">500</span>
+        <h1>Algo ha ido mal</h1>
+        <p><%= typeof message !== 'undefined' ? message : 'Ha ocurrido un error interno. Inténtalo de nuevo más tarde.' %></p>
+        <a href="/" class="btn-post-primary">
+            <i class="fa-solid fa-house"></i>
+            <span>Volver al inicio</span>
+        </a>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

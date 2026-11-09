@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Imágenes subidas por los usuarios
+public/uploads/posts/*
+!public/uploads/posts/.gitkeep

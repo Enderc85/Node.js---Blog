@@ -11,6 +11,13 @@ const createToken = (user) => {
     );
 };
 
+// Evita redirecciones abiertas: solo se permite volver a una ruta interna
+const safeNextPath = (value) => {
+    if (typeof value !== 'string') return '/';
+    if (!value.startsWith('/') || value.startsWith('//')) return '/';
+    return value;
+};
+
 // ─────────────────────────────────────────────
 // REGISTER — Crear una cuenta nueva
 // ─────────────────────────────────────────────
@@ -103,12 +110,13 @@ const login = async (req, res) => {
 
     try {
         const { email, password } = req.body;
+        const next = safeNextPath(req.body.next);
 
         // 1. Validación básica
         if (!email || !password) {
             const errorMsg = 'El correo y la contraseña son obligatorios';
             if (isFormSubmit) {
-                return res.status(400).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email });
+                return res.status(400).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email, next });
             }
             return res.status(400).json({ message: errorMsg });
         }
@@ -118,7 +126,7 @@ const login = async (req, res) => {
         if (!user) {
             const errorMsg = 'Credenciales incorrectas';
             if (isFormSubmit) {
-                return res.status(401).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email });
+                return res.status(401).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email, next });
             }
             return res.status(401).json({ message: errorMsg });
         }
@@ -128,7 +136,7 @@ const login = async (req, res) => {
         if (!isPasswordValid) {
             const errorMsg = 'Credenciales incorrectas';
             if (isFormSubmit) {
-                return res.status(401).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email });
+                return res.status(401).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email, next });
             }
             return res.status(401).json({ message: errorMsg });
         }
@@ -143,9 +151,9 @@ const login = async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000,
         });
 
-        // Si es formulario del navegador, redirigir a la home ya autenticado
+        // Si es formulario del navegador, volver a la ruta solicitada o a la home
         if (isFormSubmit) {
-            return res.redirect('/');
+            return res.redirect(next);
         }
 
         res.status(200).json({

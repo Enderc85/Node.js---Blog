@@ -19,4 +19,26 @@ const authRequired = (req, res, next) => {
     }
 };
 
+// Variante para páginas HTML: si no hay sesión, redirige al login
+// guardando la ruta solicitada para volver después de iniciar sesión.
+const authRequiredPage = (req, res, next) => {
+    const token = req.cookies.token;
+
+    if (!token) {
+        const next = encodeURIComponent(req.originalUrl);
+        return res.redirect(`/login?next=${next}`);
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.SECRET);
+        req.user = decoded;
+        return next();
+    } catch (error) {
+        res.clearCookie('token');
+        const next = encodeURIComponent(req.originalUrl);
+        return res.redirect(`/login?next=${next}`);
+    }
+};
+
 module.exports = authRequired;
+module.exports.authRequiredPage = authRequiredPage;

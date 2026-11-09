@@ -1,15 +1,30 @@
 const { Router } = require('express');
 const postService = require('../services/post.services');
+const postController = require('../controllers/postController');
+const realtime = require('../services/realtime.services');
+const authRequired = require('../middlewares/authRequired');
+const { authRequiredPage } = require('../middlewares/authRequired');
 
 const authController = require('../controllers/authController');
 
 const router = Router();
 
+// Conexión SSE para likes y comentarios en tiempo real
+router.get('/events', realtime.addClient);
+
+// Ruta interna segura: solo permite volver a rutas del propio sitio
+const safeNextPath = (value) => {
+    if (typeof value !== 'string') return '/';
+    if (!value.startsWith('/') || value.startsWith('//')) return '/';
+    return value;
+};
+
 // Página principal (Index)
 router.get('/', async (req, res) => {
     try {
         const limit = 3;
-        const initialPosts = await postService.getAllPosts(limit, 0);
+        const userId = req.user ? req.user.id : null;
+        const initialPosts = await postService.getAllPosts(limit, 0, userId);
         const recentPosts = await postService.getRecentPosts(4);
         const featuredPosts = await postService.getFeaturedPosts(3);
         const totalPosts = await postService.countPosts();
@@ -36,7 +51,8 @@ router.get('/', async (req, res) => {
 router.get('/login', (req, res) => {
     res.render('auth/login', {
         title: 'Iniciar Sesión',
-        error: null
+        error: null,
+        next: safeNextPath(req.query.next)
     });
 });
 router.post('/login', authController.login);
@@ -79,7 +95,7 @@ router.get('/api/posts/feed', async (req, res) => {
         const skip = (page - 1) * limit;
 
         const [posts, total] = await Promise.all([
-            postService.getAllPosts(limit, skip),
+            postService.getAllPosts(limit, skip, req.user ? req.user.id : null),
             postService.countPosts()
         ]);
 
@@ -99,7 +115,8 @@ router.get('/api/posts/feed', async (req, res) => {
                 authorSlug,
                 date: new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
                 likes: post.numLikes || 0,
-                comments: post.numComments || 0
+                comments: post.numComments || 0,
+                liked: Array.isArray(post.likes) && post.likes.length > 0
             };
         });
 
@@ -113,11 +130,9 @@ router.get('/api/posts/feed', async (req, res) => {
     }
 });
 
-router.get('/create-post', (req, res) => {
-    res.render('create-post', {
-        title: 'Crear post',
-        error: null
-    });
-});
+router.get('/create-post', authRequiredPage, postController.showCreateForm);
+
+// API JSON para crear posts (sin subida de archivos)
+router.post('/api/posts', authRequired, postController.createPost);
 
 module.exports = router;

@@ -3,26 +3,132 @@
 <div class="modern-page post-detail-page">
     <div class="post-detail-container">
         <!-- Columna del artículo principal -->
-        <article class="post-main-content">
+        <article class="post-main-content" data-post-id="<%= post.id %>">
             <header class="post-detail-header">
                 <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
                 <h1 class="post-detail-title"><%= post.title %></h1>
                 <div class="post-meta-row">
                     <span class="meta-item"><i class="fa-regular fa-user"></i> <%= post.author ? (post.author.name || post.author.email.split('@')[0]) : 'Anónimo' %></span>
                     <span class="meta-item"><i class="fa-regular fa-calendar"></i> <%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
-                    <span class="meta-item"><i class="fa-regular fa-heart"></i> <%= post.numLikes || 0 %> Me gusta</span>
+                    <span class="meta-item"><i class="fa-regular fa-heart"></i> <span class="like-count"><%= post.numLikes || 0 %></span> Me gusta</span>
                 </div>
             </header>
 
-            <% if (post.image) { %>
-                <div class="post-detail-image-wrapper">
-                    <img src="<%= post.image %>" alt="<%= post.title %>" class="post-detail-image">
+            <% const gallery = (post.images && post.images.length > 0)
+                ? post.images
+                : (post.image ? [{ url: post.image }] : []);
+               const canPreview = (url) => (typeof isPreviewImage === 'function'
+                   ? isPreviewImage(url)
+                   : ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes((url.split('?')[0].split('.').pop() || '').toLowerCase()));
+               const fileExtension = (url) => {
+                   const file = (url.split('?')[0].split('#')[0].split('/').pop() || '');
+                   const ext = file.includes('.') ? file.split('.').pop() : '';
+                   return ext && ext.length <= 5 ? ext.toUpperCase() : 'ARCHIVO';
+               }; %>
+
+            <% if (gallery.length > 0) { %>
+                <div class="post-gallery <%= gallery.length === 1 ? 'post-gallery-single' : '' %>">
+                    <% gallery.forEach((img) => { %>
+                        <% if (canPreview(img.url)) { %>
+                            <a href="<%= img.url %>" target="_blank" rel="noopener" class="post-gallery-item">
+                                <img src="<%= img.url %>" alt="<%= post.title %>" class="post-detail-image" loading="lazy">
+                            </a>
+                        <% } else { %>
+                            <a href="<%= img.url %>" target="_blank" rel="noopener" download
+                                class="post-gallery-item post-gallery-file">
+                                <i class="fa-regular fa-file-image"></i>
+                                <span>Vista previa no disponible (<%= fileExtension(img.url) %>)</span>
+                                <small>Abrir archivo</small>
+                            </a>
+                        <% } %>
+                    <% }); %>
                 </div>
             <% } %>
 
             <div class="post-detail-body">
-                <%- post.content.replace(/\n/g, '<br>') %>
+                <%= post.content %>
             </div>
+
+            <div class="post-reactions">
+                <button class="detail-like-btn <%= post.likedByMe ? 'is-liked' : '' %>"
+                    data-post-id="<%= post.id %>" data-liked="<%= post.likedByMe %>" title="Me gusta">
+                    <i class="<%= post.likedByMe ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+                    <span class="like-count"><%= post.numLikes || 0 %></span>
+                    <span class="like-label">Me gusta</span>
+                </button>
+                <a href="#comentarios" class="detail-comments-link">
+                    <i class="fa-regular fa-comment"></i>
+                    <span><span class="comment-count"><%= post.numComments || 0 %></span> comentarios</span>
+                </a>
+            </div>
+
+            <section id="comentarios" class="post-comments" data-post-id="<%= post.id %>">
+                <div class="post-comments-head">
+                    <h2><i class="fa-regular fa-comments"></i> Comentarios</h2>
+                    <span class="comments-count"><%= post.numComments || 0 %></span>
+                </div>
+
+                <% if (typeof commentFeedback !== 'undefined' && commentFeedback) { %>
+                    <div class="comment-feedback <%= commentFeedback.type %>" role="status">
+                        <i class="fa-solid <%= commentFeedback.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation' %>"></i>
+                        <span><%= commentFeedback.text %></span>
+                    </div>
+                <% } %>
+
+                <% if (user) { %>
+                    <form action="/posts/<%= post.id %>/comments" method="POST" class="comment-form">
+                        <div class="comment-form-head">
+                            <span class="comment-avatar"><%= (user.name || user.email.split('@')[0]).charAt(0).toUpperCase() %></span>
+                            <span>Comentando como <strong><%= user.name || user.email.split('@')[0] %></strong></span>
+                        </div>
+                        <textarea id="comment-content" name="content" rows="3" maxlength="1000" required
+                            placeholder="Escribe tu comentario..."></textarea>
+                        <div class="comment-form-actions">
+                            <span class="comment-hint">Máximo 1000 caracteres</span>
+                            <button type="submit" class="btn-post-primary">
+                                <i class="fa-regular fa-paper-plane"></i>
+                                <span>Publicar comentario</span>
+                            </button>
+                        </div>
+                    </form>
+                <% } else { %>
+                    <div class="comment-login-cta">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Inicia sesión para dejar un comentario.</p>
+                        <a href="/login?next=<%= encodeURIComponent(currentPath) %>" class="btn-post-primary">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span>Iniciar sesión</span>
+                        </a>
+                    </div>
+                <% } %>
+
+                <% if (post.comments && post.comments.length > 0) { %>
+                    <ul class="comment-list">
+                        <% post.comments.forEach((comment) => { %>
+                            <% const commentAuthor = comment.author
+                                ? (comment.author.name || comment.author.email.split('@')[0])
+                                : 'Anónimo'; %>
+                            <li class="comment-item" data-comment-id="<%= comment.id %>">
+                                <span class="comment-avatar"><%= commentAuthor.charAt(0).toUpperCase() %></span>
+                                <div class="comment-body">
+                                    <div class="comment-head">
+                                        <strong><%= commentAuthor %></strong>
+                                        <time datetime="<%= new Date(comment.createdAt).toISOString() %>">
+                                            <%= new Date(comment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                                        </time>
+                                    </div>
+                                    <p><%= comment.content %></p>
+                                </div>
+                            </li>
+                        <% }); %>
+                    </ul>
+                <% } else { %>
+                    <div class="comment-empty">
+                        <i class="fa-regular fa-comment-dots"></i>
+                        <p>Todavía no hay comentarios. ¡Sé el primero en opinar!</p>
+                    </div>
+                <% } %>
+            </section>
 
             <footer class="post-detail-footer">
                 <div class="post-share-actions">
@@ -63,5 +169,47 @@
         </aside>
     </div>
 </div>
+
+<script src="/js/realtime.js" defer></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.querySelector('.detail-like-btn');
+        if (!btn) return;
+
+        btn.addEventListener('click', async () => {
+            if (btn.dataset.busy === 'true') return;
+            btn.dataset.busy = 'true';
+
+            try {
+                const response = await fetch(`/posts/${btn.dataset.postId}/like`, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                // Sin sesión: al login y de vuelta a este post
+                if (response.status === 401 || response.status === 403) {
+                    const next = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `/login?next=${next}`;
+                    return;
+                }
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'No se pudo dar me gusta');
+
+                const icon = btn.querySelector('i');
+                btn.classList.toggle('is-liked', data.liked);
+                btn.dataset.liked = String(data.liked);
+                icon.classList.toggle('fa-solid', data.liked);
+                icon.classList.toggle('fa-regular', !data.liked);
+                btn.querySelector('.like-count').textContent = data.numLikes;
+            } catch (error) {
+                console.error('Error al dar me gusta:', error);
+            } finally {
+                btn.dataset.busy = 'false';
+            }
+        });
+    });
+</script>
 
 <%- include('../partials/footer') %>

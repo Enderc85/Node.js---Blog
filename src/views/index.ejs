@@ -75,14 +75,17 @@
                             <% } %>
 
                             <div class="post-interactions">
-                                <div class="interaction-group">
-                                    <button class="interaction-btn like-btn" onclick="toggleLike(this, <%= post.numLikes || 0 %>)">
-                                        <i class="fa-regular fa-heart"></i>
-                                        <span><%= post.numLikes || 0 %></span>
+                                <div class="interaction-group" data-post-id="<%= post.id %>">
+                                    <% const likedByMe = Array.isArray(post.likes) && post.likes.length > 0; %>
+                                    <button class="interaction-btn like-btn <%= likedByMe ? 'is-liked' : '' %>"
+                                        data-post-id="<%= post.id %>" data-liked="<%= likedByMe %>"
+                                        onclick="toggleLike(this)" title="Me gusta">
+                                        <i class="<%= likedByMe ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+                                        <span class="like-count"><%= post.numLikes || 0 %></span>
                                     </button>
                                     <a href="/posts/<%= authorSlug %>/<%= post.id %>" class="interaction-btn">
                                         <i class="fa-regular fa-comment"></i>
-                                        <span><%= post.numComments || 0 %></span>
+                                        <span class="comment-count"><%= post.numComments || 0 %></span>
                                     </a>
                                 </div>
                                 <a href="/posts/<%= authorSlug %>/<%= post.id %>" class="read-more-link">
@@ -164,6 +167,9 @@
 
 </div>
 
+<!-- Actualizaciones en vivo de likes y comentarios -->
+<script src="/js/realtime.js" defer></script>
+
 <!-- Script del Infinite Scroll con posts reales -->
 <script>
     let currentPage = 1;
@@ -200,14 +206,16 @@
                 </div>
             ` : ''}
             <div class="post-interactions">
-                <div class="interaction-group">
-                    <button class="interaction-btn like-btn" onclick="toggleLike(this, ${post.likes})">
-                        <i class="fa-regular fa-heart"></i>
-                        <span>${post.likes}</span>
+                <div class="interaction-group" data-post-id="${post.id}">
+                    <button class="interaction-btn like-btn ${post.liked ? 'is-liked' : ''}"
+                        data-post-id="${post.id}" data-liked="${post.liked}"
+                        onclick="toggleLike(this)" title="Me gusta">
+                        <i class="${post.liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        <span class="like-count">${post.likes}</span>
                     </button>
                     <a href="${post.url}" class="interaction-btn">
                         <i class="fa-regular fa-comment"></i>
-                        <span>${post.comments}</span>
+                        <span class="comment-count">${post.comments}</span>
                     </a>
                 </div>
                 <a href="${post.url}" class="read-more-link">
@@ -265,19 +273,40 @@
         observer.observe(trigger);
     }
 
-    function toggleLike(btn, initialCount) {
+    async function toggleLike(btn) {
+        const postId = btn.dataset.postId;
+        if (!postId || btn.dataset.busy === 'true') return;
+
         const icon = btn.querySelector('i');
         const countSpan = btn.querySelector('span');
-        const isLiked = icon.classList.contains('fa-solid');
+        btn.dataset.busy = 'true';
 
-        if (isLiked) {
-            icon.classList.remove('fa-solid', 'text-danger');
-            icon.classList.add('fa-regular');
-            countSpan.textContent = parseInt(countSpan.textContent) - 1;
-        } else {
-            icon.classList.remove('fa-regular');
-            icon.classList.add('fa-solid', 'text-danger');
-            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+        try {
+            const response = await fetch(`/posts/${postId}/like`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            // Sin sesión: llevamos al login y volvemos a esta misma página
+            if (response.status === 401 || response.status === 403) {
+                const next = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `/login?next=${next}`;
+                return;
+            }
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'No se pudo dar me gusta');
+
+            btn.dataset.liked = String(data.liked);
+            btn.classList.toggle('is-liked', data.liked);
+            icon.classList.toggle('fa-solid', data.liked);
+            icon.classList.toggle('text-danger', data.liked);
+            icon.classList.toggle('fa-regular', !data.liked);
+            countSpan.textContent = data.numLikes;
+        } catch (error) {
+            console.error('Error al dar me gusta:', error);
+        } finally {
+            btn.dataset.busy = 'false';
         }
     }
 </script>

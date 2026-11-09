@@ -47,12 +47,20 @@
             <div class="header-auth-actions">
                 <% if (typeof user !=='undefined' && user) { %>
                     <!-- Usuario logueado -->
-                    <div class="create-post" id="create-post">
+                    <a href="/create-post" id="create-post"
+                        class="create-post-btn <%= (typeof currentPath !== 'undefined' && currentPath === '/create-post') ? 'active' : '' %>"
+                        title="Crear un nuevo post">
                         <i class="fa-solid fa-plus"></i>
-                        <a href="/create-post"
-                            class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/create-post') ? 'active' : '' %>">Crear
-                            post</a>
-                    </div>
+                        <span>Crea un nuevo post</span>
+                    </a>
+                    <% if (user.role === 'ADMIN') { %>
+                        <a href="/admin"
+                            class="admin-nav-btn <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/admin')) ? 'active' : '' %>"
+                            title="Administración">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Administración</span>
+                        </a>
+                    <% } %>
                     <div class="user-pill">
                         <i class="fa-regular fa-user"></i>
                         <span>

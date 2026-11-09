@@ -1,35 +1,197 @@
-<%include('.. /partials/header') %>
+<%- include('../partials/header') %>
 
-    <div class="main-content">
-        <div class="container" style="max-width: 800px;">
-            <h1 class="text-center mb-4">Crear Nuevo Post</h1>
+<div class="create-post-page">
+    <div class="create-post-card">
+        <header class="create-post-header">
+            <span class="create-post-badge"><i class="fa-solid fa-pen-nib"></i> Nuevo artículo</span>
+            <h1>Crea un nuevo post</h1>
+            <p>Comparte tu historia con la comunidad. La fecha de publicación se añadirá automáticamente.</p>
+        </header>
 
-            <% if (messages.error) { %>
-                <div class="alert alert-danger" role="alert">
-                    <%= messages.error %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger" role="alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <form action="/posts" method="POST" enctype="multipart/form-data" id="postForm" class="create-post-form"
+            novalidate>
+            <div class="post-form-group">
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" class="post-form-control" maxlength="150"
+                    placeholder="Escribe un título llamativo" required
+                    value="<%= typeof formData !== 'undefined' ? formData.title : '' %>">
+                <span class="form-hint">Máximo 150 caracteres.</span>
+            </div>
+
+            <div class="post-form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" class="post-form-control" rows="7" maxlength="20000"
+                    placeholder="Cuéntanos de qué trata tu post..." required><%= typeof formData !== 'undefined' ? formData.description : '' %></textarea>
+                <span class="form-hint">Máximo 20.000 caracteres.</span>
+            </div>
+
+            <div class="post-form-group">
+                <label for="publishedAt">Fecha de publicación</label>
+                <div class="post-date-display" id="publishedAt">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    <span id="publishedAtText">Hoy</span>
+                    <small>Automática</small>
                 </div>
-                <% } %>
+            </div>
 
-                    <form action="/posts" method="POST" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Título</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="content" class="form-label">Contenido</label>
-                            <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Imagen Destacada</label>
-                            <input class="form-control" type="file" id="image" name="image" accept="image/*" required>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="isFeatured" name="isFeatured">
-                            <label class="form-check-label" for="isFeatured">Destacar en portada</label>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Publicar</button>
-                    </form>
-        </div>
+            <div class="post-form-group">
+                <label for="images">Imágenes</label>
+                <label for="images" class="image-dropzone" id="imageDropzone">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <strong>Haz clic o arrastra las imágenes aquí</strong>
+                    <span>JPG, JPEG, PNG, HEIC o RAW · Hasta 10 imágenes · 20 MB por imagen</span>
+                    <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.heic,.heif,.raw,.cr2,.cr3,.nef,.arw,.dng,.orf,.rw2,.raf,image/jpeg,image/png,image/heic"
+                        multiple required hidden>
+                </label>
+                <div class="client-error" id="clientError" role="alert" hidden></div>
+                <div class="image-preview-grid" id="imagePreviewGrid"></div>
+            </div>
+
+            <div class="create-post-actions">
+                <a href="/" class="btn-post-secondary">Cancelar</a>
+                <button type="submit" class="btn-post-primary" id="submitBtn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Publicar post</span>
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <%include('.. /partials/footer') %>
+<script>
+    (function () {
+        const form = document.getElementById('postForm');
+        const input = document.getElementById('images');
+        const dropzone = document.getElementById('imageDropzone');
+        const previewGrid = document.getElementById('imagePreviewGrid');
+        const clientError = document.getElementById('clientError');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const ALLOWED = ['jpg', 'jpeg', 'png', 'heic', 'heif', 'raw', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'raf'];
+        const PREVIEWABLE = ['jpg', 'jpeg', 'png'];
+        const MAX_FILES = 10;
+        const MAX_SIZE = 20 * 1024 * 1024;
+
+        // Mostrar la fecha actual (la fecha real la asigna la base de datos)
+        const dateEl = document.getElementById('publishedAtText');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('es-ES', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+
+        const extOf = (name) => (name.split('.').pop() || '').toLowerCase();
+
+        function showError(message) {
+            clientError.textContent = message;
+            clientError.hidden = !message;
+        }
+
+        function renderPreviews(files) {
+            previewGrid.innerHTML = '';
+            files.forEach((file) => {
+                const ext = extOf(file.name);
+                const item = document.createElement('div');
+                item.className = 'image-preview-item';
+
+                if (PREVIEWABLE.includes(ext)) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    img.onload = () => URL.revokeObjectURL(img.src);
+                    item.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'image-preview-file';
+                    placeholder.innerHTML = '<i class="fa-regular fa-file-image"></i><span>' + ext.toUpperCase() + '</span>';
+                    item.appendChild(placeholder);
+                }
+
+                const name = document.createElement('span');
+                name.className = 'image-preview-name';
+                name.textContent = file.name;
+                item.appendChild(name);
+                previewGrid.appendChild(item);
+            });
+        }
+
+        function validate(files) {
+            if (files.length === 0) return 'Debes subir al menos una imagen.';
+            if (files.length > MAX_FILES) return 'Puedes subir un máximo de ' + MAX_FILES + ' imágenes.';
+
+            for (const file of files) {
+                const ext = extOf(file.name);
+                if (!ALLOWED.includes(ext)) {
+                    return 'Formato no permitido: "' + file.name + '". Usa JPG, JPEG, PNG, HEIC o RAW.';
+                }
+                if (file.size > MAX_SIZE) {
+                    return 'La imagen "' + file.name + '" supera los 20 MB.';
+                }
+            }
+            return '';
+        }
+
+        input.addEventListener('change', () => {
+            const files = Array.from(input.files || []);
+            const error = validate(files);
+            showError(error);
+            renderPreviews(files);
+        });
+
+        // Arrastrar y soltar
+        ['dragenter', 'dragover'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.add('is-dragging');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.remove('is-dragging');
+            });
+        });
+
+        dropzone.addEventListener('drop', (event) => {
+            const dropped = Array.from(event.dataTransfer.files || []);
+            if (dropped.length === 0) return;
+
+            const dataTransfer = new DataTransfer();
+            dropped.forEach((file) => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+            input.dispatchEvent(new Event('change'));
+        });
+
+        form.addEventListener('submit', (event) => {
+            const files = Array.from(input.files || []);
+            const error = validate(files);
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+
+            if (error) {
+                event.preventDefault();
+                showError(error);
+                return;
+            }
+
+            if (!title || !description) {
+                event.preventDefault();
+                showError('El título y la descripción son obligatorios.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Publicando...</span>';
+        });
+    })();
+</script>
+
+<%- include('../partials/footer') %>

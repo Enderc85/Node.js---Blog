@@ -1,0 +1,182 @@
+<%- include('../partials/header') %>
+
+<%
+    const formatDate = (value) => new Date(value).toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+    const extensionOf = (url) => {
+        const file = (url.split('?')[0].split('#')[0].split('/').pop() || '');
+        const ext = file.includes('.') ? file.split('.').pop() : '';
+        return ext && ext.length <= 5 ? ext.toUpperCase() : 'IMG';
+    };
+%>
+
+<div class="admin-page">
+    <div class="admin-container">
+        <header class="admin-header">
+            <div>
+                <span class="admin-badge"><i class="fa-solid fa-shield-halved"></i> Administración</span>
+                <h1>Imágenes del sitio</h1>
+                <p>Revisa todas las imágenes publicadas y elimina las que no deberían estar visibles.</p>
+            </div>
+            <a href="/" class="btn-post-secondary admin-back-link">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Volver al blog</span>
+            </a>
+        </header>
+
+        <% if (notice) { %>
+            <div class="alert alert-success" role="status">
+                <i class="fa-solid fa-circle-check"></i>
+                <span><%= notice %></span>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-danger" role="alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <section class="admin-stats" aria-label="Resumen">
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon"><i class="fa-regular fa-newspaper"></i></span>
+                <strong><%= stats.posts %></strong>
+                <span>Posts</span>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon"><i class="fa-regular fa-images"></i></span>
+                <strong><%= stats.postImages %></strong>
+                <span>Imágenes en posts</span>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon"><i class="fa-regular fa-folder-open"></i></span>
+                <strong><%= stats.libraryImages %></strong>
+                <span>En biblioteca</span>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon"><i class="fa-regular fa-user"></i></span>
+                <strong><%= stats.users %></strong>
+                <span>Usuarios</span>
+            </div>
+        </section>
+
+        <section class="admin-section">
+            <div class="admin-section-head">
+                <h2><i class="fa-regular fa-images"></i> Imágenes de los posts</h2>
+                <span class="admin-count"><%= stats.postImages %></span>
+            </div>
+
+            <% if (postImages.length === 0) { %>
+                <div class="admin-empty">
+                    <i class="fa-regular fa-image"></i>
+                    <p>No hay imágenes publicadas en los posts.</p>
+                </div>
+            <% } else { %>
+                <div class="admin-image-grid">
+                    <% postImages.forEach((entry) => { %>
+                        <article class="admin-image-card">
+                            <div class="admin-image-thumb">
+                                <% if (entry.previewable) { %>
+                                    <img src="<%= entry.url %>" alt="Imagen del post <%= entry.post.title %>" loading="lazy"
+                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('is-hidden');">
+                                <% } %>
+                                <div class="admin-image-file<%= entry.previewable ? ' is-hidden' : '' %>">
+                                    <i class="fa-regular fa-file-image"></i>
+                                    <span><%= extensionOf(entry.url) %></span>
+                                </div>
+
+                                <div class="admin-image-tags">
+                                    <% if (entry.isCover && entry.inGallery) { %>
+                                        <span class="admin-tag admin-tag-cover">Portada + galería</span>
+                                    <% } else if (entry.isCover) { %>
+                                        <span class="admin-tag admin-tag-cover">Portada</span>
+                                    <% } else { %>
+                                        <span class="admin-tag">Galería</span>
+                                    <% } %>
+                                    <span class="admin-tag <%= entry.local ? 'admin-tag-local' : 'admin-tag-external' %>">
+                                        <%= entry.local ? 'Local' : 'Externa' %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="admin-image-body">
+                                <a href="<%= entry.postUrl %>" class="admin-image-post" target="_blank" rel="noopener">
+                                    <%= entry.post.title %>
+                                </a>
+                                <span class="admin-image-meta">
+                                    <i class="fa-regular fa-user"></i> <%= entry.authorName %>
+                                    <span class="admin-meta-sep">·</span>
+                                    <i class="fa-regular fa-calendar"></i> <%= formatDate(entry.post.createdAt) %>
+                                </span>
+                                <code class="admin-image-url" title="<%= entry.url %>"><%= entry.url %></code>
+
+                                <form action="/admin/images/delete" method="POST" class="admin-delete-form"
+                                    onsubmit="return confirm('¿Eliminar esta imagen?<% if (entry.isCover) { %> Si es la portada, se asignará otra automáticamente o se quedará sin portada.<% } %>');">
+                                    <input type="hidden" name="postId" value="<%= entry.post.id %>">
+                                    <input type="hidden" name="url" value="<%= entry.url %>">
+                                    <button type="submit" class="admin-delete-btn">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                        <span>Eliminar</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    <% }); %>
+                </div>
+            <% } %>
+        </section>
+
+        <section class="admin-section">
+            <div class="admin-section-head">
+                <h2><i class="fa-regular fa-folder-open"></i> Biblioteca de imágenes</h2>
+                <span class="admin-count"><%= stats.libraryImages %></span>
+            </div>
+
+            <% if (library.length === 0) { %>
+                <div class="admin-empty">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <p>La biblioteca está vacía.</p>
+                </div>
+            <% } else { %>
+                <div class="admin-image-grid">
+                    <% library.forEach((image) => { %>
+                        <article class="admin-image-card">
+                            <div class="admin-image-thumb">
+                                <% if (image.previewable) { %>
+                                    <img src="<%= image.url %>" alt="Imagen de biblioteca" loading="lazy"
+                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('is-hidden');">
+                                <% } %>
+                                <div class="admin-image-file<%= image.previewable ? ' is-hidden' : '' %>">
+                                    <i class="fa-regular fa-file-image"></i>
+                                    <span><%= extensionOf(image.url) %></span>
+                                </div>
+                                <div class="admin-image-tags">
+                                    <span class="admin-tag"><%= image.category %></span>
+                                    <span class="admin-tag admin-tag-external">Externa</span>
+                                </div>
+                            </div>
+
+                            <div class="admin-image-body">
+                                <span class="admin-image-post">Biblioteca #<%= image.id %></span>
+                                <code class="admin-image-url" title="<%= image.url %>"><%= image.url %></code>
+
+                                <form action="/admin/library/delete" method="POST" class="admin-delete-form"
+                                    onsubmit="return confirm('¿Eliminar esta imagen de la biblioteca?');">
+                                    <input type="hidden" name="id" value="<%= image.id %>">
+                                    <button type="submit" class="admin-delete-btn">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                        <span>Eliminar</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    <% }); %>
+                </div>
+            <% } %>
+        </section>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
