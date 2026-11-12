@@ -4,6 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Intro de carga: solo en la primera página que se abre en la sesión -->
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var key = 'lumina-intro-seen';
+            var forced = new URLSearchParams(window.location.search).get('intro');
+
+            try {
+                if (forced === '0') {
+                    sessionStorage.setItem(key, '1');
+                    return;
+                }
+
+                var seen = sessionStorage.getItem(key) === '1';
+                if (forced !== '1' && seen) return;
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+                root.classList.add('intro-active');
+                sessionStorage.setItem(key, '1');
+            } catch (error) {
+                root.classList.remove('intro-active');
+            }
+        })();
+    </script>
+
     <title>
         <%= typeof title !=='undefined' ? title : 'Node.js Blog' %>
     </title>
@@ -31,6 +57,8 @@
 </head>
 
 <body data-authenticated="<%= (typeof user !== 'undefined' && user) ? 'true' : 'false' %>">
+
+    <%- include('page-loader') %>
 
     <!-- Header / Navbar Principal (Desktop & Tablet) -->
     <header class="main-site-header">

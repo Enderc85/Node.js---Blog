@@ -1,0 +1,148 @@
+<%# Intro de carga: se activa solo en la primera página de la sesión %>
+<script>
+    /* ============================================================
+       AJUSTES DE LA INTRO — cambia estos valores a tu gusto.
+       Todos están en segundos, salvo "tileRotate" (grados).
+       ============================================================ */
+    window.LUMINA_INTRO = {
+        lineStart: 0.15,      // cuándo empiezan a dibujarse las líneas del centro
+        lineDur: 1.10,        // duración del trazado de las líneas
+        seedDur: 0.70,        // cuánto tarda en dibujarse el marco base
+        logoAppear: 1.0,     // cuándo aparece el logo centrado
+        logoAppearDur: 0.45,  // duración del fundido del logo
+        tilesStart: 0.75,     // cuándo empieza a abrirse el primer cuadradito
+        tilesStagger: 0.08,   // separación entre la apertura de cada cuadradito
+        tileDur: 0.70,        // duración de la apertura de cada cuadradito
+        tileRotate: 12,       // grados de giro de cada cuadradito al abrirse
+        flightDur: 0.80,      // vuelo del logo hasta el header
+        tilesOutDur: 0.50,    // desvanecido de los cuadraditos al despegar
+        bgOutDur: 0.90,       // fundido del fondo del loader
+        contentDur: 0.0,     // fade-in del index real (header, posts, footer)
+        loaderHold: 1.15,     // tiempo hasta retirar el loader tras despegar
+        fallbackFlight: 2.20, // si el evento del cuadradito no llega, vuela aquí
+        safety: 4.00          // la página se desbloquea sola a los X s
+    };
+</script>
+<script>
+    (function () {
+        var root = document.documentElement;
+        if (!root.classList.contains('intro-active')) return;
+
+        var c = window.LUMINA_INTRO;
+        var set = function (name, value) { root.style.setProperty(name, value); };
+        var sec = function (value) { return value + 's'; };
+
+        set('--intro-line-start', sec(c.lineStart));
+        set('--intro-line-dur', sec(c.lineDur));
+        set('--intro-seed-dur', sec(c.seedDur));
+        set('--intro-logo-start', sec(c.logoAppear));
+        set('--intro-logo-dur', sec(c.logoAppearDur));
+        set('--intro-tile-dur', sec(c.tileDur));
+        set('--intro-tile-rot', c.tileRotate + 'deg');
+        set('--intro-flight-dur', sec(c.flightDur));
+        set('--intro-tiles-out-dur', sec(c.tilesOutDur));
+        set('--intro-bg-out-dur', sec(c.bgOutDur));
+        set('--intro-content-dur', sec(c.contentDur));
+
+        // Cada cuadradito arranca un poco después que el anterior.
+        for (var i = 0; i < 4; i++) {
+            set('--intro-tile-' + (i + 1), sec(c.tilesStart + i * c.tilesStagger));
+        }
+    })();
+</script>
+
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+    <div class="page-loader-bg"></div>
+
+    <span class="intro-line intro-line--h"></span>
+    <span class="intro-line intro-line--v"></span>
+
+    <div class="intro-construction">
+        <span class="intro-seed"></span>
+        <span class="intro-tile intro-tile--tl"></span>
+        <span class="intro-tile intro-tile--tr"></span>
+        <span class="intro-tile intro-tile--bl"></span>
+        <span class="intro-tile intro-tile--br"></span>
+    </div>
+
+    <div class="intro-logo">
+        <div class="intro-logo-inner header-logo" id="introLogoInner">
+            <span class="logo-icon"><i class="fa-solid fa-camera-retro"></i></span>
+            <span class="logo-text">Lumina<strong>Blog</strong></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var root = document.documentElement;
+        if (!root.classList.contains('intro-active')) return;
+
+        var config = window.LUMINA_INTRO;
+        var loader = document.getElementById('pageLoader');
+        var logo = document.getElementById('introLogoInner');
+        var finished = false;
+
+        var finish = function () {
+            if (finished) return;
+            finished = true;
+            root.classList.remove('intro-revealing');
+            root.classList.remove('intro-active');
+            if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        };
+
+        // Red de seguridad: si algo falla, la página nunca queda bloqueada.
+        var safety = window.setTimeout(finish, config.safety * 1000);
+
+        var fly = function () {
+            // El header se renderiza después de este bloque, así que lo buscamos ahora.
+            var target = document.querySelector('.main-site-header .header-logo');
+
+            if (!loader || !logo || !target) {
+                window.clearTimeout(safety);
+                return finish();
+            }
+
+            var from = logo.getBoundingClientRect();
+            var to = target.getBoundingClientRect();
+
+            if (!from.width || !to.width) {
+                window.clearTimeout(safety);
+                return finish();
+            }
+
+            if (logo.classList.contains('is-flying')) return;
+
+            // FLIP: el logo del centro aterriza exactamente sobre el del header.
+            logo.style.setProperty('--fly-x', (to.left - from.left) + 'px');
+            logo.style.setProperty('--fly-y', (to.top - from.top) + 'px');
+            logo.style.setProperty('--fly-scale', String(to.width / from.width));
+
+            loader.classList.add('is-revealing');
+            logo.classList.add('is-flying');
+            // A la vez: los cuadraditos se desvanecen y el index real aparece detrás.
+            root.classList.add('intro-revealing');
+
+            window.setTimeout(function () {
+                window.clearTimeout(safety);
+                finish();
+            }, config.loaderHold * 1000);
+        };
+
+        // El logo despega en el mismo instante en que el último cuadradito
+        // termina de abrirse: los cuadraditos se desvanecen con el vuelo.
+        var lastTile = loader && loader.querySelector('.intro-tile--br');
+
+        if (lastTile) {
+            var fallbackFly = window.setTimeout(fly, config.fallbackFlight * 1000);
+
+            lastTile.addEventListener('animationend', function (event) {
+                if (event.animationName !== 'intro-tile-in') return;
+                window.clearTimeout(fallbackFly);
+                fly();
+            }, { once: true });
+        } else {
+            window.setTimeout(fly, config.fallbackFlight * 1000);
+        }
+    })();
+</script>
