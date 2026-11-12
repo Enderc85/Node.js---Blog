@@ -1,16 +1,233 @@
-<%include('header.ejs') %>
-    <main>
-        <section>
-            <h1>Contact Us</h1>
+<%- include('partials/header') %>
+
+<%
+    const hasSent = typeof sent !== 'undefined' && sent;
+    const serverError = typeof error !== 'undefined' && error;
+    const isUser = typeof user !== 'undefined' && user;
+%>
+
+<main class="contact-page">
+
+    <!-- ================= Portada ================= -->
+    <section class="contact-hero">
+        <span class="contact-badge"><i class="fa-solid fa-envelope"></i> Contacta con nosotros</span>
+        <h1>Hablemos</h1>
+        <p>
+            ¿Tienes una idea, una duda o una historia que quieres contarnos? Escríbenos:
+            leemos todos los mensajes y respondemos lo antes posible.
+        </p>
+    </section>
+
+    <div class="contact-layout">
+
+        <!-- ================= Panel informativo ================= -->
+        <aside class="contact-info">
+            <h2>¿En qué podemos ayudarte?</h2>
+            <ul class="contact-reasons">
+                <li>
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <div>
+                        <strong>Propón un tema</strong>
+                        <span>Cuéntanos qué te gustaría leer o ver en el blog.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-handshake"></i>
+                    <div>
+                        <strong>Colaboraciones</strong>
+                        <span>¿Tienes fotos o una historia que encaje? Hablemos.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-circle-question"></i>
+                    <div>
+                        <strong>Dudas y sugerencias</strong>
+                        <span>Algo no funciona o crees que podemos mejorar: escuchamos.</span>
+                    </div>
+                </li>
+            </ul>
+            <div class="contact-note">
+                <i class="fa-regular fa-clock"></i>
+                <p>Solemos responder en 24–48 h. Mientras tanto, puedes seguir explorando el blog.</p>
+            </div>
+        </aside>
+
+        <!-- ================= Formulario ================= -->
+        <section class="contact-card">
+            <% if (serverError) { %>
+                <div class="contact-feedback is-visible is-error" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span><%= serverError %></span>
+                </div>
+            <% } %>
+
+            <% if (isUser) { %>
+                <p class="contact-identity">
+                    <i class="fa-regular fa-user"></i>
+                    Escribiendo como <strong><%= isUser.name || isUser.email %></strong>
+                </p>
+            <% } else { %>
+                <p class="contact-identity">
+                    <i class="fa-regular fa-circle-user"></i>
+                    Puedes escribirnos sin crear una cuenta.
+                </p>
+            <% } %>
+
+            <form id="contactForm" class="contact-form" action="/contact" method="POST" <%= hasSent ? 'hidden' : '' %>>
+                <div class="contact-row">
+                    <div class="contact-field">
+                        <label for="contactName">Tu nombre</label>
+                        <input type="text" id="contactName" name="name" class="contact-input"
+                            placeholder="¿Cómo te llamas?" required minlength="2" maxlength="80"
+                            autocomplete="name" value="<%= prefillName %>">
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactEmail">Tu correo</label>
+                        <input type="email" id="contactEmail" name="email" class="contact-input"
+                            placeholder="nombre@ejemplo.com" required maxlength="160"
+                            autocomplete="email" value="<%= prefillEmail %>">
+                    </div>
+                </div>
+
+                <div class="contact-field">
+                    <label for="contactMessage">Tu mensaje</label>
+                    <textarea id="contactMessage" name="message" class="contact-input" rows="7"
+                        placeholder="Cuéntanos qué tienes en mente…" required minlength="10"
+                        maxlength="2000"><%= prefillMessage %></textarea>
+                </div>
+
+                <div class="contact-form-footer">
+                    <p class="contact-hint">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        Usamos tus datos solo para responderte.
+                    </p>
+                    <button type="submit" class="contact-submit" id="contactSubmit">
+                        <span class="contact-submit-label">Enviar mensaje</span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div class="contact-feedback" id="contactFeedback" role="status" aria-live="polite"></div>
+            </form>
+
+            <div class="contact-success-panel <%= hasSent ? 'is-visible' : '' %>" id="contactSuccess"
+                role="status" aria-live="polite">
+                <div class="contact-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <h2>Mensaje enviado</h2>
+                <p>Gracias por escribirnos. Hemos guardado tu mensaje y te responderemos en el correo que nos has dejado.</p>
+                <a href="/contact" class="contact-submit contact-submit-ghost" id="contactReset">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Enviar otro mensaje</span>
+                </a>
+            </div>
         </section>
-        <form action="">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email">
-            <label for="message">Message</label>
-            <textarea name="" id="" cols="30" rows="10"></textarea>
-            <button type="submit">Send</button>
-        </form>
-    </main>
-    <%include('footer.ejs') %>
+    </div>
+
+</main>
+
+<script>
+    (() => {
+        const form = document.getElementById('contactForm');
+        const feedback = document.getElementById('contactFeedback');
+        const submit = document.getElementById('contactSubmit');
+        const successPanel = document.getElementById('contactSuccess');
+        const resetLink = document.getElementById('contactReset');
+        if (!form || !successPanel) return;
+
+        const nameInput = form.elements.namedItem('name');
+        const emailInput = form.elements.namedItem('email');
+        const messageInput = form.elements.namedItem('message');
+        const submitLabel = submit ? submit.querySelector('.contact-submit-label') : null;
+        const defaultLabel = submitLabel ? submitLabel.textContent : '';
+        const prefersReduced = window.matchMedia
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const hideFeedback = () => {
+            if (!feedback) return;
+            feedback.classList.remove('is-visible', 'is-error', 'is-success');
+            feedback.textContent = '';
+        };
+
+        const showFeedback = (message, type) => {
+            if (!feedback) return;
+            feedback.textContent = '';
+            const icon = document.createElement('i');
+            icon.className = type === 'success'
+                ? 'fa-solid fa-circle-check'
+                : 'fa-solid fa-triangle-exclamation';
+            const text = document.createElement('span');
+            text.textContent = message;
+            feedback.append(icon, text);
+            feedback.classList.remove('is-error', 'is-success');
+            feedback.classList.add('is-visible', type === 'success' ? 'is-success' : 'is-error');
+        };
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            hideFeedback();
+
+            // El formulario se convierte en JSON y se envía a la API
+            const payload = {
+                name: nameInput ? nameInput.value.trim() : '',
+                email: emailInput ? emailInput.value.trim() : '',
+                message: messageInput ? messageInput.value.trim() : ''
+            };
+
+            if (submit) {
+                submit.disabled = true;
+                submit.classList.add('is-sending');
+            }
+            if (submitLabel) submitLabel.textContent = 'Enviando…';
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || 'No pudimos enviar tu mensaje.');
+                }
+
+                form.hidden = true;
+                form.reset();
+                successPanel.classList.add('is-visible');
+                successPanel.scrollIntoView({
+                    behavior: prefersReduced ? 'auto' : 'smooth',
+                    block: 'center'
+                });
+
+                const heading = successPanel.querySelector('h2');
+                if (heading) {
+                    heading.setAttribute('tabindex', '-1');
+                    heading.focus({ preventScroll: true });
+                }
+            } catch (error) {
+                showFeedback(error.message || 'No pudimos enviar tu mensaje. Inténtalo de nuevo.', 'error');
+            } finally {
+                if (submit) {
+                    submit.disabled = false;
+                    submit.classList.remove('is-sending');
+                }
+                if (submitLabel) submitLabel.textContent = defaultLabel;
+            }
+        });
+
+        if (resetLink) {
+            resetLink.addEventListener('click', (event) => {
+                // Con JavaScript no hace falta recargar: vuelve al formulario
+                event.preventDefault();
+                successPanel.classList.remove('is-visible');
+                form.hidden = false;
+                hideFeedback();
+                if (nameInput) nameInput.focus();
+            });
+        }
+    })();
+</script>
+
+<%- include('partials/footer') %>

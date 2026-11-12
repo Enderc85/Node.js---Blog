@@ -11,9 +11,26 @@
     <!-- FontAwesome 6 y Estilos Modernos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/modern-index.css">
+
+    <!-- Tipografías: Fraunces (display) + Manrope (UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tema oscuro Lumina: fondo tipo Telegram + tarjetas de cristal -->
+    <link rel="stylesheet" href="/css/lumina-theme.css">
+
+    <!-- Ajuste automático de proporción para las imágenes de los posts -->
+    <script src="/js/media-fit.js" defer></script>
+
+    <!-- Micro-interacción de likes (optimista con reversión si el servidor falla) -->
+    <script src="/js/likes.js" defer></script>
+
+    <!-- Paralaje del fondo de "lluvia" con la posición del cursor -->
+    <script src="/js/ambient.js" defer></script>
 </head>
 
-<body>
+<body data-authenticated="<%= (typeof user !== 'undefined' && user) ? 'true' : 'false' %>">
 
     <!-- Header / Navbar Principal (Desktop & Tablet) -->
     <header class="main-site-header">
@@ -31,15 +48,20 @@
                     <i class="fa-solid fa-house"></i>
                     <span>Home</span>
                 </a>
+                <a href="/profiles"
+                    class="nav-link <%= (typeof currentPath !== 'undefined' && (currentPath === '/profiles' || currentPath === '/profile' || currentPath === '/personal')) ? 'active' : '' %>">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Perfiles</span>
+                </a>
                 <a href="/about"
                     class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/about') ? 'active' : '' %>">
                     <i class="fa-solid fa-circle-info"></i>
-                    <span>About</span>
+                    <span>Sobre nosotros.</span>
                 </a>
                 <a href="/contact"
                     class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/contact') ? 'active' : '' %>">
                     <i class="fa-solid fa-envelope"></i>
-                    <span>Contact Us</span>
+                    <span>Contacta con nosotros</span>
                 </a>
             </nav>
 
@@ -61,12 +83,16 @@
                             <span>Administración</span>
                         </a>
                     <% } %>
-                    <div class="user-pill">
-                        <i class="fa-regular fa-user"></i>
+                    <a href="/personal" class="user-pill user-pill-link" title="Mi perfil">
+                        <% if (user.avatar) { %>
+                            <img src="<%= user.avatar %>" alt="" class="user-pill-avatar">
+                        <% } else { %>
+                            <i class="fa-regular fa-user"></i>
+                        <% } %>
                         <span>
-                            <%= user.email.split('@')[0] %>
+                            <%= user.name || user.email.split('@')[0] %>
                         </span>
-                    </div>
+                    </a>
                     <form action="/api/auth/logout" method="POST" style="margin: 0;">
                         <button type="submit" class="btn-nav-logout" title="Cerrar sesión">
                             <i class="fa-solid fa-right-from-bracket"></i>

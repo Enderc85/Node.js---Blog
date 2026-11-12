@@ -25,6 +25,7 @@ async function main() {
             email: 'elena@blog.com',
             name: 'Elena García',
             password: passwordHash,
+            bio: 'Fotógrafa de paisajes y luz natural. Persigo amaneceres con niebla y caminos que no salen en los mapas.'
         }
     });
 
@@ -33,6 +34,7 @@ async function main() {
             email: 'marcos@blog.com',
             name: 'Marcos Soler',
             password: passwordHash,
+            bio: 'Viajero y fotógrafo de arquitectura. Me pierdo entre fiordos, líneas y ciudades que nunca duermen.'
         }
     });
 
@@ -41,6 +43,7 @@ async function main() {
             email: 'sara@blog.com',
             name: 'Sara Vega',
             password: passwordHash,
+            bio: 'Retratos y fotografía nocturna. Me interesa la luz que aparece cuando todos se van a dormir.'
         }
     });
 
@@ -51,6 +54,7 @@ async function main() {
             name: 'Administrador',
             password: passwordHash,
             role: 'ADMIN',
+            bio: 'Detrás de LuminaBlog. Cuidando la comunidad y aprendiendo de cada historia que se comparte.'
         }
     });
 

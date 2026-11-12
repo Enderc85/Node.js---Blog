@@ -1,0 +1,115 @@
+<%- include('partials/header') %>
+
+<main class="about-page">
+
+    <!-- ================= Portada ================= -->
+    <section class="about-hero">
+        <span class="about-badge"><i class="fa-solid fa-circle-info"></i> Sobre nosotros</span>
+        <h1 class="about-title">Un rincón para mirar el mundo <em>con otros ojos</em></h1>
+        <p class="about-lead">
+            LuminaBlog es un blog de fotografía y vida cotidiana pensado para que cualquiera
+            —con una cámara profesional o con el móvil del bolsillo— se sienta libre de compartir
+            lo que ve y lo que le intriga. Aquí no hay escaparates ni competición: hay historias,
+            curiosidades y conversaciones que nacen de un interés real.
+        </p>
+        <div class="about-hero-actions">
+            <a href="/contact" class="about-btn about-btn-primary">
+                <i class="fa-solid fa-envelope"></i>
+                <span>Escríbenos</span>
+            </a>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <a href="/create-post" class="about-btn about-btn-ghost">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Publica una historia</span>
+                </a>
+            <% } else { %>
+                <a href="/register" class="about-btn about-btn-ghost">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Únete a la comunidad</span>
+                </a>
+            <% } %>
+        </div>
+    </section>
+
+    <!-- ================= Qué puedes encontrar ================= -->
+    <section class="about-grid" aria-label="Qué puedes encontrar en LuminaBlog">
+        <article class="about-card">
+            <span class="about-card-icon"><i class="fa-solid fa-camera-retro"></i></span>
+            <h2>Fotos con historia</h2>
+            <p>No buscamos la imagen técnicamente perfecta, sino la que tiene algo detrás: una mirada, un lugar, un instante que no volverá.</p>
+        </article>
+
+        <article class="about-card">
+            <span class="about-card-icon"><i class="fa-solid fa-lightbulb"></i></span>
+            <h2>Curiosidades cotidianas</h2>
+            <p>Un dato que descubriste ayer, una costumbre que te fascina, algo que llevas años queriendo contar. La vida también se comparte en palabras.</p>
+        </article>
+
+        <article class="about-card">
+            <span class="about-card-icon"><i class="fa-solid fa-users"></i></span>
+            <h2>Comunidad sin ruido</h2>
+            <p>Sin algoritmos decidiendo por ti ni métricas que obsesionen. Solo publicaciones, me gusta honestos y comentarios con algo que decir.</p>
+        </article>
+
+        <article class="about-card">
+            <span class="about-card-icon"><i class="fa-solid fa-mobile-screen-button"></i></span>
+            <h2>Cualquier cámara sirve</h2>
+            <p>Da igual si disparas con una réflex de 2.000 € o con el móvil de tu bolsillo. Lo que cuenta es lo que quieres compartir.</p>
+        </article>
+    </section>
+
+    <!-- ================= Manifiesto ================= -->
+    <section class="about-manifesto">
+        <blockquote>«La fotografía no es lo que se ve, sino lo que se siente al mirar.»</blockquote>
+    </section>
+
+    <!-- ================= El creador ================= -->
+    <section class="about-creator" id="creador">
+        <div class="about-creator-avatar">
+            <i class="fa-solid fa-user-astronaut"></i>
+        </div>
+        <div class="about-creator-body">
+            <span class="about-badge">El creador</span>
+            <h2>Sobre el creador</h2>
+            <!--
+                ✏️ EDITA AQUÍ
+                Sustituye el párrafo de abajo por tu nombre, tu historia y tus redes sociales.
+                El resto de la página puede quedarse tal cual.
+            -->
+            <p class="about-placeholder">
+                Este hueco está reservado para la persona que está detrás de LuminaBlog:
+                su nombre, de dónde viene su amor por la fotografía y qué le gustaría que
+                llegara a ser esta comunidad. <em>(Texto provisional: se completará pronto.)</em>
+            </p>
+        </div>
+    </section>
+
+    <!-- ================= Llamada final ================= -->
+    <section class="about-cta">
+        <h2>¿Tienes algo que compartir?</h2>
+        <p>
+            Este blog se hace entre todos. Si tienes una foto, una curiosidad o simplemente
+            ganas de escribirnos, estamos al otro lado.
+        </p>
+        <div class="about-hero-actions">
+            <a href="/contact" class="about-btn about-btn-primary">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Escríbenos</span>
+            </a>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <a href="/create-post" class="about-btn about-btn-ghost">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Crear un post</span>
+                </a>
+            <% } else { %>
+                <a href="/register" class="about-btn about-btn-ghost">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Crear una cuenta</span>
+                </a>
+            <% } %>
+        </div>
+    </section>
+
+</main>
+
+<%- include('partials/footer') %>

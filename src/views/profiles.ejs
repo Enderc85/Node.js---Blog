@@ -1,0 +1,385 @@
+<%- include('partials/header') %>
+
+<%
+    const profilesJson = JSON.stringify(profiles.map((profile) => ({
+        id: profile.id,
+        name: profile.name,
+        handle: profile.handle,
+        bio: profile.bio,
+        avatar: profile.avatar,
+        initial: profile.initial,
+        postsCount: profile.postsCount,
+        likesReceived: profile.likesReceived,
+        commentsCount: profile.commentsCount,
+        joinedLabel: profile.joinedLabel,
+        rank: profile.rank,
+        featured: profile.featured
+            ? {
+                title: profile.featured.title,
+                image: profile.featured.image,
+                url: profile.featured.url,
+                numLikes: profile.featured.numLikes
+            }
+            : null
+    })));
+%>
+
+<main class="profiles-page">
+
+    <!-- ================= Portada y buscador ================= -->
+    <section class="profiles-hero">
+        <span class="profiles-badge"><i class="fa-solid fa-users"></i> Comunidad</span>
+        <h1 class="profiles-title">Personas detrás de las <em>historias</em></h1>
+        <p class="profiles-lead">
+            Cada foto tiene alguien detrás. Descubre a quienes más comparten, busca por nombre
+            o descripción y entra en su mini perfil para ver su post destacado.
+        </p>
+
+        <form class="profiles-search" method="GET" action="/profiles" role="search">
+            <i class="fa-solid fa-magnifying-glass profiles-search-icon" aria-hidden="true"></i>
+            <input type="search" id="profileSearch" name="q" value="<%= search %>" maxlength="80"
+                placeholder="Busca por nombre, usuario o descripción…" autocomplete="off"
+                aria-label="Buscar perfiles">
+            <button type="button" class="profiles-search-clear" id="profileSearchClear"
+                aria-label="Limpiar búsqueda" <%= search ? '' : 'hidden' %>>
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </form>
+    </section>
+
+    <!-- ================= Ranking de perfiles ================= -->
+    <section class="profiles-list-section">
+        <header class="profiles-list-head">
+            <div>
+                <span class="profiles-list-kicker"><i class="fa-solid fa-fire"></i> Ranking de actividad</span>
+                <h2>Perfiles más activos</h2>
+            </div>
+            <p class="profiles-count" id="profilesCount">
+                <%= profiles.length %> <%= profiles.length === 1 ? 'perfil' : 'perfiles' %>
+            </p>
+        </header>
+
+        <% if (profiles.length === 0) { %>
+            <div class="profiles-empty" id="profilesEmpty">
+                <div class="profiles-empty-icon"><i class="fa-solid fa-user-slash"></i></div>
+                <h3>No encontramos perfiles</h3>
+                <p>
+                    Prueba con otro nombre o
+                    <a href="/profiles">limpia la búsqueda</a>.
+                </p>
+            </div>
+        <% } else { %>
+            <div class="profiles-grid" id="profilesGrid">
+                <% profiles.forEach((profile) => { %>
+                    <article class="profile-card" data-profile-id="<%= profile.id %>"
+                        data-search="<%= (profile.name + ' ' + profile.handle + ' ' + profile.bio).toLowerCase() %>">
+                        <div class="profile-card-media <%= profile.featured && profile.featured.image ? '' : 'is-empty' %>">
+                            <% if (profile.featured && profile.featured.image) { %>
+                                <img src="<%= profile.featured.image %>" alt="Post destacado de <%= profile.name %>" loading="lazy">
+                            <% } else { %>
+                                <span class="profile-card-media-empty"><i class="fa-regular fa-image"></i></span>
+                            <% } %>
+
+                            <% if (profile.featured) { %>
+                                <span class="profile-card-media-label"><i class="fa-solid fa-star"></i> Destacado</span>
+                            <% } else { %>
+                                <span class="profile-card-media-label is-muted"><i class="fa-regular fa-clock"></i> Sin posts aún</span>
+                            <% } %>
+
+                            <% if (profile.rank <= 3) { %>
+                                <span class="profile-rank rank-<%= profile.rank %>">#<%= profile.rank %></span>
+                            <% } %>
+                        </div>
+
+                        <div class="profile-card-body">
+                            <div class="profile-card-avatar">
+                                <% if (profile.avatar) { %>
+                                    <img src="<%= profile.avatar %>" alt="Foto de <%= profile.name %>" loading="lazy">
+                                <% } else { %>
+                                    <span><%= profile.initial %></span>
+                                <% } %>
+                            </div>
+
+                            <div class="profile-card-title">
+                                <h3><%= profile.name %></h3>
+                                <span class="profile-handle">@<%= profile.handle %></span>
+                            </div>
+
+                            <p class="profile-card-bio">
+                                <%= profile.bio || 'Miembro de LuminaBlog. Todavía no ha escrito su descripción.' %>
+                            </p>
+
+                            <div class="profile-card-stats">
+                                <span><strong><%= profile.postsCount %></strong> posts</span>
+                                <span><strong><%= profile.likesReceived %></strong> me gusta</span>
+                                <span><strong><%= profile.commentsCount %></strong> comentarios</span>
+                            </div>
+
+                            <button type="button" class="profile-card-open" data-profile-id="<%= profile.id %>">
+                                Ver perfil
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </article>
+                <% }); %>
+            </div>
+
+            <div class="profiles-empty" id="profilesNoResults" hidden>
+                <div class="profiles-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h3>Sin coincidencias</h3>
+                <p>Ningún perfil coincide con tu búsqueda. Prueba con otras palabras.</p>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<!-- Datos para el mini preview (JSON escapado para no romper el HTML) -->
+<script type="application/json" id="profilesData"><%- profilesJson.replace(/</g, '\\u003c') %></script>
+
+<!-- ================= Mini preview de perfil ================= -->
+<div class="profile-modal" id="profileModal" hidden>
+    <div class="profile-modal-backdrop" data-close-profile></div>
+
+    <div class="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="profileModalName">
+        <button type="button" class="profile-modal-close" id="profileModalClose" aria-label="Cerrar perfil">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="profile-modal-media" id="profileModalMedia">
+            <img id="profileModalImage" src="" alt="" hidden>
+            <span class="profile-modal-media-empty" id="profileModalMediaEmpty">
+                <i class="fa-regular fa-image"></i>
+            </span>
+        </div>
+
+        <div class="profile-modal-body">
+            <div class="profile-modal-avatar" id="profileModalAvatar">
+                <span id="profileModalInitial">L</span>
+            </div>
+
+            <div class="profile-modal-heading">
+                <span class="profile-modal-kicker" id="profileModalRank">Perfil</span>
+                <h2 id="profileModalName">Perfil</h2>
+                <span class="profile-handle" id="profileModalHandle">@usuario</span>
+            </div>
+
+            <p class="profile-modal-bio" id="profileModalBio"></p>
+
+            <div class="profile-modal-stats">
+                <div><strong id="profileModalPosts">0</strong><span>posts</span></div>
+                <div><strong id="profileModalLikes">0</strong><span>me gusta</span></div>
+                <div><strong id="profileModalComments">0</strong><span>comentarios</span></div>
+            </div>
+
+            <a class="profile-modal-featured" id="profileModalFeatured" href="#" hidden>
+                <span class="profile-modal-featured-thumb">
+                    <img id="profileModalFeaturedImg" src="" alt="" hidden>
+                    <i class="fa-regular fa-image" id="profileModalFeaturedIcon"></i>
+                </span>
+                <span class="profile-modal-featured-copy">
+                    <span class="profile-modal-featured-label"><i class="fa-solid fa-star"></i> Post destacado</span>
+                    <strong id="profileModalFeaturedTitle">—</strong>
+                    <small id="profileModalFeaturedMeta">—</small>
+                </span>
+            </a>
+
+            <p class="profile-modal-joined" id="profileModalJoined"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const dataEl = document.getElementById('profilesData');
+        const searchInput = document.getElementById('profileSearch');
+        const clearButton = document.getElementById('profileSearchClear');
+        const grid = document.getElementById('profilesGrid');
+        const countEl = document.getElementById('profilesCount');
+        const noResults = document.getElementById('profilesNoResults');
+        const modal = document.getElementById('profileModal');
+        const closeButton = document.getElementById('profileModalClose');
+
+        // ---------- Buscador instantáneo (con fallback GET sin JS) ----------
+        const cards = grid ? Array.from(grid.querySelectorAll('.profile-card')) : [];
+
+        const applyFilter = () => {
+            if (!searchInput) return;
+
+            const query = searchInput.value.trim().toLowerCase();
+            let visible = 0;
+
+            cards.forEach((card) => {
+                const haystack = card.dataset.search || '';
+                const match = !query || haystack.includes(query);
+                card.hidden = !match;
+                if (match) visible += 1;
+            });
+
+            if (noResults) noResults.hidden = visible !== 0;
+            if (countEl) {
+                countEl.textContent = visible + (visible === 1 ? ' perfil' : ' perfiles');
+            }
+            if (clearButton) clearButton.hidden = query.length === 0;
+        };
+
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilter);
+            searchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && searchInput.value) {
+                    event.preventDefault();
+                    searchInput.value = '';
+                    applyFilter();
+                }
+            });
+        }
+
+        if (clearButton) {
+            clearButton.addEventListener('click', () => {
+                if (!searchInput) return;
+                searchInput.value = '';
+                applyFilter();
+                searchInput.focus();
+            });
+        }
+
+        applyFilter();
+
+        // ---------- Mini preview ----------
+        let profilesById = new Map();
+        try {
+            const list = dataEl ? JSON.parse(dataEl.textContent) : [];
+            profilesById = new Map(list.map((profile) => [String(profile.id), profile]));
+        } catch (error) {
+            profilesById = new Map();
+        }
+
+        const nodes = {
+            image: document.getElementById('profileModalImage'),
+            mediaEmpty: document.getElementById('profileModalMediaEmpty'),
+            avatar: document.getElementById('profileModalAvatar'),
+            initial: document.getElementById('profileModalInitial'),
+            rank: document.getElementById('profileModalRank'),
+            name: document.getElementById('profileModalName'),
+            handle: document.getElementById('profileModalHandle'),
+            bio: document.getElementById('profileModalBio'),
+            posts: document.getElementById('profileModalPosts'),
+            likes: document.getElementById('profileModalLikes'),
+            comments: document.getElementById('profileModalComments'),
+            joined: document.getElementById('profileModalJoined'),
+            featured: document.getElementById('profileModalFeatured'),
+            featuredImg: document.getElementById('profileModalFeaturedImg'),
+            featuredIcon: document.getElementById('profileModalFeaturedIcon'),
+            featuredTitle: document.getElementById('profileModalFeaturedTitle'),
+            featuredMeta: document.getElementById('profileModalFeaturedMeta')
+        };
+
+        let lastFocused = null;
+
+        const setAvatar = (profile) => {
+            if (!nodes.avatar) return;
+            nodes.avatar.replaceChildren();
+
+            if (profile.avatar) {
+                const img = document.createElement('img');
+                img.src = profile.avatar;
+                img.alt = 'Foto de ' + profile.name;
+                nodes.avatar.appendChild(img);
+            } else {
+                const initial = document.createElement('span');
+                initial.textContent = profile.initial;
+                nodes.avatar.appendChild(initial);
+            }
+        };
+
+        const openProfile = (id, trigger) => {
+            const profile = profilesById.get(String(id));
+            if (!profile || !modal) return;
+
+            lastFocused = trigger || document.activeElement;
+
+            nodes.name.textContent = profile.name;
+            nodes.handle.textContent = '@' + profile.handle;
+            nodes.bio.textContent = profile.bio || 'Este perfil todavía no tiene descripción.';
+            nodes.posts.textContent = profile.postsCount;
+            nodes.likes.textContent = profile.likesReceived;
+            nodes.comments.textContent = profile.commentsCount;
+            nodes.joined.textContent = 'Miembro desde ' + profile.joinedLabel;
+            nodes.rank.textContent = profile.rank <= 3
+                ? 'Top #' + profile.rank + ' de la comunidad'
+                : 'Perfil de la comunidad';
+
+            setAvatar(profile);
+
+            if (nodes.image) {
+                if (profile.featured && profile.featured.image) {
+                    nodes.image.src = profile.featured.image;
+                    nodes.image.alt = 'Post destacado de ' + profile.name;
+                    nodes.image.hidden = false;
+                    if (nodes.mediaEmpty) nodes.mediaEmpty.hidden = true;
+                } else {
+                    nodes.image.removeAttribute('src');
+                    nodes.image.hidden = true;
+                    if (nodes.mediaEmpty) nodes.mediaEmpty.hidden = false;
+                }
+            }
+
+            if (nodes.featured) {
+                if (profile.featured) {
+                    nodes.featured.hidden = false;
+                    nodes.featured.href = profile.featured.url;
+                    nodes.featuredTitle.textContent = profile.featured.title;
+                    nodes.featuredMeta.textContent = profile.featured.numLikes + ' me gusta';
+
+                    if (profile.featured.image) {
+                        nodes.featuredImg.src = profile.featured.image;
+                        nodes.featuredImg.alt = profile.featured.title;
+                        nodes.featuredImg.hidden = false;
+                        nodes.featuredIcon.hidden = true;
+                    } else {
+                        nodes.featuredImg.hidden = true;
+                        nodes.featuredIcon.hidden = false;
+                    }
+                } else {
+                    nodes.featured.hidden = true;
+                }
+            }
+
+            modal.hidden = false;
+            document.body.classList.add('profile-modal-open');
+            closeButton.focus({ preventScroll: true });
+        };
+
+        const closeProfile = () => {
+            if (!modal || modal.hidden) return;
+            modal.hidden = true;
+            document.body.classList.remove('profile-modal-open');
+
+            if (lastFocused && typeof lastFocused.focus === 'function') {
+                lastFocused.focus({ preventScroll: true });
+            }
+            lastFocused = null;
+        };
+
+        if (grid) {
+            grid.addEventListener('click', (event) => {
+                const card = event.target.closest('.profile-card');
+                if (!card) return;
+                openProfile(card.dataset.profileId, card.querySelector('.profile-card-open'));
+            });
+        }
+
+        if (closeButton) closeButton.addEventListener('click', closeProfile);
+
+        if (modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target.hasAttribute('data-close-profile')) closeProfile();
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeProfile();
+        });
+    })();
+</script>
+
+<%- include('partials/footer') %>

@@ -23,7 +23,14 @@
         const data = parse(event);
         if (!data || !data.postId) return;
 
-        setText(`[data-post-id="${data.postId}"] .like-count`, data.numLikes);
+        document.querySelectorAll(`[data-post-id="${data.postId}"] .like-count`).forEach((el) => {
+            // No pisar la animación en curso ni el estado optimista
+            // de un clic propio (el toggle sincronizará con el servidor)
+            const btn = el.closest('[data-busy]');
+            if (el.classList.contains('like-count-roll')) return;
+            if (btn && btn.dataset.busy === 'true') return;
+            el.textContent = data.numLikes;
+        });
     });
 
     source.addEventListener('comment', (event) => {

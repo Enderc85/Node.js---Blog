@@ -6,6 +6,9 @@ const authRequired = require('../middlewares/authRequired');
 const { authRequiredPage } = require('../middlewares/authRequired');
 
 const authController = require('../controllers/authController');
+const contactController = require('../controllers/contactController');
+const profileController = require('../controllers/profileController');
+const { uploadAvatar } = require('../middlewares/upload');
 
 const router = Router();
 
@@ -67,25 +70,26 @@ router.post('/register', authController.register);
 
 router.post('/logout', authController.logout);
 
+// Página Sobre nosotros
 router.get('/about', (req, res) => {
-    res.render('index', {
-        title: 'Acerca de Nosotros',
-        posts: [],
-        recentPosts: [],
-        featuredPosts: [],
-        hasMore: false
-    });
+    res.render('about', { title: 'Sobre nosotros · LuminaBlog' });
 });
 
-router.get('/contact', (req, res) => {
-    res.render('index', {
-        title: 'Contacto',
-        posts: [],
-        recentPosts: [],
-        featuredPosts: [],
-        hasMore: false
-    });
-});
+// Página de contacto: el formulario convierte los datos en JSON y los envía
+// a la API (POST /api/contact). POST /contact es el fallback sin JavaScript.
+router.get('/contact', contactController.showContactPage);
+router.post('/contact', contactController.submitContactForm);
+router.post('/api/contact', contactController.submitContactJson);
+
+// Sección pública de perfiles: ranking y buscador
+router.get('/profiles', profileController.showProfiles);
+
+// Espacio personal: datos y edición del perfil propio
+router.get('/personal', authRequiredPage, profileController.showPersonal);
+router.post('/personal', authRequiredPage, uploadAvatar, profileController.updatePersonal);
+
+// Enlaces antiguos: el perfil propio ahora vive en /personal
+router.get('/profile', (req, res) => res.redirect('/personal'));
 
 // Endpoint API para el infinite scroll (devuelve posts reales de la BD)
 router.get('/api/posts/feed', async (req, res) => {

@@ -1,0 +1,304 @@
+<%- include('partials/header') %>
+
+<%
+    const hasSaved = typeof saved !== 'undefined' && saved;
+    const pageError = typeof error !== 'undefined' && error;
+    const formData = (typeof form !== 'undefined' && form)
+        ? form
+        : {
+            name: user ? (user.name || '') : '',
+            bio: user ? (user.bio || '') : '',
+            featuredPostId: user && user.featuredPostId ? String(user.featuredPostId) : '',
+            avatar: user ? user.avatar : null
+        };
+    const ownPosts = typeof myPosts !== 'undefined' ? myPosts : [];
+    const selectedFeatured = String(formData.featuredPostId || '');
+
+    const person = (typeof me !== 'undefined' && me)
+        ? me
+        : {
+            id: user ? user.id : null,
+            name: formData.name || (user ? user.name : '') || (user ? user.email.split('@')[0] : 'Tu perfil'),
+            handle: user ? user.email.split('@')[0] : 'usuario',
+            bio: formData.bio || '',
+            avatar: formData.avatar || null,
+            initial: (formData.name || '?').charAt(0).toUpperCase(),
+            featured: null,
+            rank: null,
+            postsCount: 0,
+            likesReceived: 0,
+            commentsCount: 0,
+            joinedLabel: '',
+            activity: 0
+        };
+
+    const previewName = formData.name || person.name;
+    const previewInitial = (previewName || '?').charAt(0).toUpperCase();
+    const previewAvatar = formData.avatar || person.avatar || null;
+%>
+
+<main class="personal-page">
+
+    <!-- ================= Portada ================= -->
+    <section class="personal-hero">
+        <span class="profiles-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Mi espacio</span>
+        <h1 class="profiles-title">Tu perfil, <em>a tu manera</em></h1>
+        <p class="profiles-lead">
+            Cambia tu foto, tu nombre, tu descripción y el post que mejor te representa.
+            Así te verá el resto de la comunidad.
+        </p>
+        <a href="/profiles" class="personal-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Volver a perfiles</span>
+        </a>
+    </section>
+
+    <% if (pageError) { %>
+        <div class="profile-alert is-error personal-alert" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span><%= pageError %></span>
+        </div>
+    <% } %>
+
+    <% if (hasSaved) { %>
+        <div class="profile-alert is-success personal-alert" role="status">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Perfil actualizado. Así te verán ahora los demás.</span>
+        </div>
+    <% } %>
+
+    <div class="personal-layout">
+
+        <!-- ================= Editor ================= -->
+        <section class="profile-editor personal-editor">
+            <header class="profile-editor-head">
+                <div class="profile-editor-avatar">
+                    <% if (previewAvatar) { %>
+                        <img src="<%= previewAvatar %>" alt="Tu foto de perfil" id="avatarPreview">
+                    <% } else { %>
+                        <img alt="" id="avatarPreview" hidden>
+                    <% } %>
+                    <span class="profile-editor-avatar-fallback" id="avatarFallback"><%= previewInitial %></span>
+                </div>
+                <div class="profile-editor-heading">
+                    <span class="profile-editor-kicker"><i class="fa-solid fa-pen-nib"></i> Editar perfil</span>
+                    <h2>Personaliza tu perfil</h2>
+                    <p>Elige tu foto, cuéntanos qué te gusta fotografiar y destaca el post que mejor te representa.</p>
+                </div>
+            </header>
+
+            <form action="/personal" method="POST" enctype="multipart/form-data" class="profile-editor-form">
+                <div class="profile-editor-grid">
+                    <div class="profile-editor-photo">
+                        <label for="avatar" class="profile-avatar-drop">
+                            <span class="profile-avatar-drop-icon"><i class="fa-solid fa-camera"></i></span>
+                            <span>Cambiar foto</span>
+                            <input type="file" id="avatar" name="avatar" hidden
+                                accept=".jpg,.jpeg,.png,.webp,.gif,.avif,image/jpeg,image/png,image/webp,image/gif,image/avif">
+                        </label>
+
+                        <% if (previewAvatar) { %>
+                            <label class="profile-avatar-remove">
+                                <input type="checkbox" name="removeAvatar" value="1">
+                                Quitar foto actual
+                            </label>
+                        <% } %>
+
+                        <p class="profile-editor-hint">JPG, PNG, WEBP o GIF · máx. 6 MB</p>
+                    </div>
+
+                    <div class="profile-editor-fields">
+                        <div class="profile-field">
+                            <label for="profileName">Nombre visible</label>
+                            <input type="text" id="profileName" name="name" class="profile-input"
+                                value="<%= formData.name %>" maxlength="<%= nameMax %>" minlength="2"
+                                placeholder="¿Cómo quieres aparecer?" required autocomplete="name">
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="featuredPost">Post destacado</label>
+                            <select id="featuredPost" name="featuredPostId" class="profile-input profile-select">
+                                <option value="">Automático (tu post con más me gusta)</option>
+                                <% ownPosts.forEach((post) => { %>
+                                    <option value="<%= post.id %>" <%= selectedFeatured === String(post.id) ? 'selected' : '' %>>
+                                        <%= post.title %><% if (post.numLikes) { %> · <%= post.numLikes %> me gusta<% } %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <span class="profile-editor-hint">Es la miniatura que verán los demás en tu tarjeta.</span>
+                        </div>
+
+                        <div class="profile-field profile-field-wide">
+                            <div class="profile-field-head">
+                                <label for="profileBio">Descripción</label>
+                                <span class="profile-bio-count" id="bioCount">0/<%= bioMax %></span>
+                            </div>
+                            <textarea id="profileBio" name="bio" class="profile-input" rows="4"
+                                maxlength="<%= bioMax %>"
+                                placeholder="Cuenta en dos líneas qué te gusta fotografiar o qué te trae por aquí…"><%= formData.bio %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-editor-actions">
+                    <span class="profile-editor-hint">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Puedes cambiar todo esto cuando quieras.
+                    </span>
+                    <button type="submit" class="profile-save">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Guardar perfil</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ================= Vista previa y cuenta ================= -->
+        <aside class="personal-side">
+            <div class="personal-side-head">
+                <span class="personal-side-kicker"><i class="fa-regular fa-eye"></i> Así te ven</span>
+                <span class="personal-side-note">Se actualiza al guardar</span>
+            </div>
+
+            <article class="profile-card profile-card--static" id="personalPreview">
+                <div class="profile-card-media <%= person.featured && person.featured.image ? '' : 'is-empty' %>">
+                    <% if (person.featured && person.featured.image) { %>
+                        <img src="<%= person.featured.image %>" alt="Tu post destacado">
+                    <% } else { %>
+                        <span class="profile-card-media-empty"><i class="fa-regular fa-image"></i></span>
+                    <% } %>
+
+                    <% if (person.featured) { %>
+                        <span class="profile-card-media-label"><i class="fa-solid fa-star"></i> Destacado</span>
+                    <% } else { %>
+                        <span class="profile-card-media-label is-muted"><i class="fa-regular fa-clock"></i> Sin posts aún</span>
+                    <% } %>
+
+                    <% if (person.rank && person.rank <= 3) { %>
+                        <span class="profile-rank rank-<%= person.rank %>">#<%= person.rank %></span>
+                    <% } %>
+                </div>
+
+                <div class="profile-card-body">
+                    <div class="profile-card-avatar">
+                        <% if (previewAvatar) { %>
+                            <img src="<%= previewAvatar %>" alt="Tu foto de perfil" id="previewAvatarImg">
+                        <% } else { %>
+                            <img alt="Tu foto de perfil" id="previewAvatarImg" hidden>
+                        <% } %>
+                        <span id="previewAvatarFallback" <%= previewAvatar ? 'hidden' : '' %>><%= previewInitial %></span>
+                    </div>
+
+                    <div class="profile-card-title">
+                        <h3 id="previewName"><%= previewName %></h3>
+                        <span class="profile-handle">@<%= person.handle %></span>
+                    </div>
+
+                    <p class="profile-card-bio" id="previewBio">
+                        <%= formData.bio || person.bio || 'Miembro de LuminaBlog. Todavía no ha escrito su descripción.' %>
+                    </p>
+
+                    <div class="profile-card-stats">
+                        <span><strong><%= person.postsCount %></strong> posts</span>
+                        <span><strong><%= person.likesReceived %></strong> me gusta</span>
+                        <span><strong><%= person.commentsCount %></strong> comentarios</span>
+                    </div>
+
+                    <span class="profile-card-open profile-card-open--static">
+                        <span>Perfil público</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+            </article>
+
+            <div class="personal-account">
+                <h3><i class="fa-solid fa-id-card"></i> Cuenta</h3>
+                <p>
+                    <span>Email</span>
+                    <strong><%= user.email %></strong>
+                </p>
+                <% if (person.joinedLabel) { %>
+                    <p>
+                        <span>Miembro desde</span>
+                        <strong><%= person.joinedLabel %></strong>
+                    </p>
+                <% } %>
+                <p>
+                    <span>Actividad</span>
+                    <strong><%= person.activity %></strong>
+                </p>
+                <p>
+                    <span>Puesto</span>
+                    <strong><%= person.rank ? '#' + person.rank + ' de la comunidad' : 'Sin ranking' %></strong>
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<script>
+    (() => {
+        const avatarInput = document.getElementById('avatar');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarFallback = document.getElementById('avatarFallback');
+        const previewAvatarImg = document.getElementById('previewAvatarImg');
+        const previewAvatarFallback = document.getElementById('previewAvatarFallback');
+        const nameInput = document.getElementById('profileName');
+        const bioInput = document.getElementById('profileBio');
+        const bioCount = document.getElementById('bioCount');
+        const previewName = document.getElementById('previewName');
+        const previewBio = document.getElementById('previewBio');
+
+        const bioPlaceholder = 'Miembro de LuminaBlog. Todavía no ha escrito su descripción.';
+
+        if (avatarInput) {
+            avatarInput.addEventListener('change', () => {
+                const file = avatarInput.files && avatarInput.files[0];
+                if (!file) return;
+
+                const url = URL.createObjectURL(file);
+
+                if (avatarPreview) {
+                    avatarPreview.src = url;
+                    avatarPreview.hidden = false;
+                    avatarPreview.onload = () => URL.revokeObjectURL(url);
+                }
+                if (avatarFallback) avatarFallback.hidden = true;
+
+                if (previewAvatarImg) {
+                    previewAvatarImg.src = url;
+                    previewAvatarImg.hidden = false;
+                }
+                if (previewAvatarFallback) previewAvatarFallback.hidden = true;
+            });
+        }
+
+        if (nameInput && previewName) {
+            nameInput.addEventListener('input', () => {
+                const value = nameInput.value.trim();
+                previewName.textContent = value || 'Tu perfil';
+
+                if (previewAvatarFallback) {
+                    previewAvatarFallback.textContent = (value || '?').charAt(0).toUpperCase();
+                }
+            });
+        }
+
+        const updateBio = () => {
+            if (!bioInput) return;
+
+            if (bioCount) bioCount.textContent = bioInput.value.length + '/' + bioInput.maxLength;
+
+            if (previewBio) {
+                previewBio.textContent = bioInput.value.trim() || bioPlaceholder;
+            }
+        };
+
+        if (bioInput) {
+            bioInput.addEventListener('input', updateBio);
+            updateBio();
+        }
+    })();
+</script>
+
+<%- include('partials/footer') %>

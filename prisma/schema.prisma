@@ -13,16 +13,20 @@ enum Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  posts     Post[]
-  comments  Comment[]
-  likes     Like[]
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  name           String?
+  password       String?
+  bio            String?
+  avatar         String?
+  featuredPostId Int?
+  role           Role     @default(USER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  posts          Post[]
+  comments       Comment[]
+  likes          Like[]
+  featuredPost   Post?    @relation("UserFeaturedPost", fields: [featuredPostId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
@@ -43,6 +47,7 @@ model Post {
   images      PostImage[]
   comments    Comment[]
   likes       Like[]
+  featuredBy  User[]     @relation("UserFeaturedPost")
 
   @@map("posts")
 }
@@ -99,8 +104,8 @@ model Contact {
   email     String
   message   String
   published DateTime @default(now())
-  postId    Int
-  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int?
+  post      Post?    @relation(fields: [postId], references: [id])
 
   @@map("contacts")
 }

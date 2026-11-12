@@ -33,7 +33,7 @@ app.use(async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.SECRET);
         const user = await prisma.user.findUnique({
             where: { id: decoded.id },
-            select: { id: true, email: true, name: true, role: true }
+            select: { id: true, email: true, name: true, role: true, bio: true, avatar: true, featuredPostId: true }
         });
 
         if (user) {
