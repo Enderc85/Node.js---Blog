@@ -16,8 +16,8 @@
         <header class="admin-header">
             <div>
                 <span class="admin-badge"><i class="fa-solid fa-shield-halved"></i> Administración</span>
-                <h1>Imágenes del sitio</h1>
-                <p>Revisa todas las imágenes publicadas y elimina las que no deberían estar visibles.</p>
+                <h1>Contenido del sitio</h1>
+                <p>Gestiona los posts publicados y revisa o elimina las imágenes que no deberían estar visibles.</p>
             </div>
             <a href="/" class="btn-post-secondary admin-back-link">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -60,6 +60,61 @@
                 <strong><%= stats.users %></strong>
                 <span>Usuarios</span>
             </div>
+        </section>
+
+        <section class="admin-section">
+            <div class="admin-section-head">
+                <h2><i class="fa-regular fa-newspaper"></i> Posts publicados</h2>
+                <span class="admin-count"><%= stats.posts %></span>
+            </div>
+
+            <% if (posts.length === 0) { %>
+                <div class="admin-empty">
+                    <i class="fa-regular fa-newspaper"></i>
+                    <p>No hay posts publicados.</p>
+                </div>
+            <% } else { %>
+                <div class="admin-post-list">
+                    <% posts.forEach((post) => { %>
+                        <article class="admin-post-row">
+                            <a href="<%= post.postUrl %>" class="admin-post-thumb" target="_blank" rel="noopener"
+                                aria-label="Ver post: <%= post.title %>">
+                                <% if (post.image) { %>
+                                    <img src="<%= post.image %>" alt="Portada del post <%= post.title %>" loading="lazy"
+                                        onerror="this.style.display='none';">
+                                <% } else { %>
+                                    <span class="admin-post-thumb-empty"><i class="fa-regular fa-image"></i></span>
+                                <% } %>
+                            </a>
+
+                            <div class="admin-post-main">
+                                <a href="<%= post.postUrl %>" class="admin-post-title" target="_blank" rel="noopener">
+                                    <%= post.title %>
+                                </a>
+                                <span class="admin-image-meta">
+                                    <i class="fa-regular fa-user"></i> <%= post.authorName %>
+                                    <span class="admin-meta-sep">·</span>
+                                    <i class="fa-regular fa-calendar"></i> <%= formatDate(post.createdAt) %>
+                                </span>
+                                <div class="admin-post-stats">
+                                    <span><i class="fa-regular fa-heart"></i> <%= post.likesCount %></span>
+                                    <span><i class="fa-regular fa-comment"></i> <%= post.commentsCount %></span>
+                                    <span><i class="fa-regular fa-images"></i> <%= post.imagesCount %></span>
+                                </div>
+                            </div>
+
+                            <form action="/admin/posts/delete" method="POST" class="admin-post-delete"
+                                onsubmit="return confirm('¿Eliminar este post? También se borrarán sus comentarios, me gusta e imágenes.');">
+                                <input type="hidden" name="postId" value="<%= post.id %>">
+                                <button type="submit" class="admin-delete-btn admin-delete-btn--compact">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                    <span>Eliminar post</span>
+                                </button>
+                            </form>
+                        </article>
+                    <% }); %>
+                </div>
+            <% } %>
         </section>
 
         <section class="admin-section">

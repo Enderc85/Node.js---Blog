@@ -8,6 +8,7 @@ const router = Router();
 router.use(adminRequired);
 
 router.get('/', adminController.dashboard);
+router.post('/posts/delete', adminController.deletePost);
 router.post('/images/delete', adminController.deletePostImage);
 router.post('/library/delete', adminController.deleteLibraryImage);
 

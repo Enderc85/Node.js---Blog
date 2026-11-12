@@ -1,20 +1,24 @@
 const adminService = require('../services/admin.services');
 
 const NOTICES = {
-    'post': 'Imagen del post eliminada correctamente.',
+    'post': 'Post eliminado correctamente.',
+    'image': 'Imagen del post eliminada correctamente.',
     'library': 'Imagen eliminada de la biblioteca.'
 };
 
 const ERRORS = {
     'invalid': 'Los datos de la imagen no son válidos.',
     'notfound': 'La imagen ya no existe o no pertenece a ese post.',
-    'server': 'No se pudo eliminar la imagen. Inténtalo de nuevo.'
+    'server': 'No se pudo eliminar la imagen. Inténtalo de nuevo.',
+    'post_invalid': 'El post indicado no es válido.',
+    'post_notfound': 'El post ya no existe o ya fue eliminado.',
+    'post_server': 'No se pudo eliminar el post. Inténtalo de nuevo.'
 };
 
-// GET /admin → panel con todas las imágenes de la web
+// GET /admin → panel con los posts y todas las imágenes de la web
 const dashboard = async (req, res) => {
     try {
-        const data = await adminService.getImagesOverview();
+        const data = await adminService.getDashboardData();
 
         res.render('admin/images', {
             title: 'Administración',
@@ -31,6 +35,22 @@ const dashboard = async (req, res) => {
     }
 };
 
+// POST /admin/posts/delete → elimina un post completo
+const deletePost = async (req, res) => {
+    try {
+        const result = await adminService.deletePost(req.body.postId);
+
+        if (!result.ok) {
+            return res.redirect(`/admin?error=post_${result.reason}`);
+        }
+
+        return res.redirect('/admin?deleted=post');
+    } catch (error) {
+        console.error('Error eliminando post:', error);
+        return res.redirect('/admin?error=post_server');
+    }
+};
+
 // POST /admin/images/delete → elimina una imagen de un post
 const deletePostImage = async (req, res) => {
     try {
@@ -41,7 +61,7 @@ const deletePostImage = async (req, res) => {
             return res.redirect(`/admin?error=${result.reason}`);
         }
 
-        return res.redirect('/admin?deleted=post');
+        return res.redirect('/admin?deleted=image');
     } catch (error) {
         console.error('Error eliminando imagen de post:', error);
         return res.redirect('/admin?error=server');
@@ -66,6 +86,7 @@ const deleteLibraryImage = async (req, res) => {
 
 module.exports = {
     dashboard,
+    deletePost,
     deletePostImage,
     deleteLibraryImage
 };

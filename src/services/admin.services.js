@@ -25,15 +25,16 @@ const authorSlug = (author) => {
         .replace(/\s+/g, '-');
 };
 
-// Devuelve todas las imágenes que se muestran en la web:
+// Devuelve los posts publicados y todas las imágenes que se muestran en la web:
 // portadas de posts + galerías + la biblioteca Images.
-const getImagesOverview = async () => {
+const getDashboardData = async () => {
     const [posts, library, totalUsers] = await Promise.all([
         prisma.post.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
                 author: { select: { id: true, name: true, email: true } },
-                images: { orderBy: { position: 'asc' } }
+                images: { orderBy: { position: 'asc' } },
+                _count: { select: { comments: true, likes: true } }
             }
         }),
         prisma.images.findMany({ orderBy: { id: 'desc' } }),
@@ -83,7 +84,20 @@ const getImagesOverview = async () => {
         previewable: isPreviewableImage(image.url)
     }));
 
+    const postsList = posts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        image: post.image || null,
+        createdAt: post.createdAt,
+        postUrl: `/posts/${authorSlug(post.author)}/${post.id}`,
+        authorName: post.author.name || post.author.email.split('@')[0],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        imagesCount: post.images.length
+    }));
+
     return {
+        posts: postsList,
         postImages,
         library: libraryImages,
         stats: {
@@ -170,8 +184,54 @@ const deleteLibraryImage = async (id) => {
     return { ok: true };
 };
 
+// Elimina un post completo (comentarios, me gusta y galería caen en cascada)
+// y borra del disco las imágenes locales que ya no referencie nadie.
+const deletePost = async (postId) => {
+    const id = Number(postId);
+    if (!Number.isInteger(id) || id <= 0) return { ok: false, reason: 'invalid' };
+
+    const post = await prisma.post.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            title: true,
+            image: true,
+            images: { select: { url: true } }
+        }
+    });
+
+    if (!post) return { ok: false, reason: 'notfound' };
+
+    // Reunimos todas las URLs del post antes de borrarlo.
+    const urls = new Set();
+    if (post.image) urls.add(post.image);
+    for (const image of post.images) urls.add(image.url);
+
+    // PostImage, Comment y Like se eliminan en cascada según el esquema.
+    await prisma.post.delete({ where: { id } });
+
+    await Promise.all([...urls].map(async (url) => {
+        const filePath = localFilePath(url);
+        if (!filePath) return;
+
+        const [coverRefs, galleryRefs, libraryRefs] = await Promise.all([
+            prisma.post.count({ where: { image: url } }),
+            prisma.postImage.count({ where: { url } }),
+            prisma.images.count({ where: { url } })
+        ]);
+
+        // Solo borramos el archivo si ninguna otra parte de la BD lo usa.
+        if (coverRefs + galleryRefs + libraryRefs === 0) {
+            await fs.unlink(filePath).catch(() => {});
+        }
+    }));
+
+    return { ok: true, title: post.title };
+};
+
 module.exports = {
-    getImagesOverview,
+    getDashboardData,
+    deletePost,
     deletePostImage,
     deleteLibraryImage
 };
