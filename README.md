@@ -20,6 +20,43 @@ npm start            # o npm run dev para recarga automática
 
 La aplicación queda en `http://localhost:3000`.
 
+## Conexión a la base de datos (Prisma 7)
+
+Con Prisma 7 la URL de conexión ya no se escribe en `schema.prisma`:
+
+- `prisma.config.ts` lee `DATABASE_URL` del `.env` para la CLI (migraciones,
+  `db push`, introspección...).
+- `src/config/db.js` elige el adaptador según el host de `DATABASE_URL`:
+  - Prisma Postgres (`db.prisma.io`): `@prisma/adapter-ppg`, el *serverless
+    driver* oficial. Habla HTTP/WebSocket por el puerto **443**, así que
+    funciona en redes que bloquean el 5432.
+  - Cualquier otro PostgreSQL (local, Docker...): `@prisma/adapter-pg`, que
+    necesita el puerto **5432**.
+
+Variables relevantes:
+
+- `DATABASE_URL`: cadena de conexión. Para Prisma Postgres es la conexión
+  directa que da Prisma Console (`...@db.prisma.io:5432/postgres?sslmode=require`).
+- `ACCELERATE_URL` (opcional): URL de Prisma Accelerate
+  (`prisma+postgres://accelerate.prisma-data.net/?api_key=...`). Si está
+  definida, tiene prioridad. También va por HTTPS 443, pero **se retira el
+  1 de diciembre de 2026**, así que solo se recomienda como alternativa
+  temporal.
+
+### Redes que bloquean el puerto 5432
+
+Si `npx prisma db execute` responde `P1001: Can't reach database server` pero
+`https://db.prisma.io:443` sí funciona, el 5432 está bloqueado por la red.
+
+- **La aplicación funciona igualmente**: con Prisma Postgres usa el serverless
+  driver (`@prisma/adapter-ppg`) por 443. No hace falta configurar nada más.
+- **La CLI no**: `prisma db push`, `prisma migrate` y `prisma studio` siguen
+  necesitando una conexión directa al 5432. Para cambiar el esquema desde una
+  red bloqueada, genera el SQL con `prisma migrate diff` y ejecútalo en el
+  editor SQL de Prisma Console, o usa otra red.
+
+`npm run seed` sí funciona: usa el cliente de la app, no la CLI.
+
 ## Intro de carga
 
 La portada muestra una pequeña intro dibujada con CSS la primera vez que se
