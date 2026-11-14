@@ -20,6 +20,40 @@ npm start            # o npm run dev para recarga automática
 
 La aplicación queda en `http://localhost:3000`.
 
+## Almacenamiento de imágenes
+
+Las imágenes que suben los usuarios (portadas, galerías y fotos de perfil) se
+guardan **en la base de datos**, en la tabla `media`, y se sirven desde
+`/media/:id/:archivo`. Así cualquier equipo o despliegue que use la misma
+`DATABASE_URL` ve las mismas imágenes, aunque la subida se haya hecho desde otro
+sitio.
+
+- La URL conserva la extensión del archivo (`/media/12/foto.jpeg`) porque la web
+  la usa para decidir si puede mostrar la imagen o debe ofrecerla como descarga
+  (HEIC y RAW se descargan).
+- Se aceptan JPG, JPEG, PNG, HEIC y los RAW habituales, con un máximo de 20 MB
+  por imagen y 10 imágenes por post. Los avatares admiten JPG, JPEG, PNG, WEBP,
+  GIF y AVIF con un máximo de 6 MB.
+- La respuesta se cachea un año (`immutable`): el contenido de un `id` nunca
+  cambia.
+- Al borrar un post, una imagen o un avatar desde la web, el registro de `media`
+  se elimina solo si ya no lo referencia ninguna otra parte de la base de datos.
+- Las imágenes nuevas ya no dependen de `public/uploads`; esa carpeta solo
+  conserva los archivos antiguos.
+
+### Migrar imágenes antiguas
+
+Si la base de datos todavía apunta a archivos de `public/uploads`, este comando
+los copia a la tabla `media` y actualiza todas las referencias:
+
+```bash
+npm run migrate-media
+```
+
+Es idempotente: solo procesa URLs locales cuyo archivo siga existiendo en disco.
+No borra los originales, así que puedes comprobar que todo se ve bien y después
+eliminar el contenido de `public/uploads`.
+
 ## Intro de carga
 
 La portada muestra una pequeña intro dibujada con CSS la primera vez que se

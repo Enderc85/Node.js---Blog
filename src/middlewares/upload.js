@@ -1,17 +1,10 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
 
-// Carpeta donde se guardan las imágenes subidas de los posts
-const UPLOAD_DIR = path.join(__dirname, '../../public/uploads/posts');
-
-// Carpeta de fotos de perfil
-const AVATAR_DIR = path.join(__dirname, '../../public/uploads/avatars');
-
-// Creamos las carpetas si no existen (multer no las crea por sí solo)
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-fs.mkdirSync(AVATAR_DIR, { recursive: true });
+// Los archivos se reciben en memoria y se guardan en la base de datos
+// (src/services/media.services.js), no en el disco local. Así una imagen
+// subida desde un equipo se ve desde cualquier otro.
+const storage = multer.memoryStorage();
 
 // Formatos permitidos. Se aceptan los indicados en el requisito
 // (jpg, jpeg, png, heic) más los RAW habituales de cada fabricante.
@@ -22,16 +15,6 @@ const ALLOWED_EXTENSIONS = new Set([
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB por imagen
 const MAX_FILES = 10;                   // Máximo de imágenes por post
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        // Nombre único y seguro: nunca usamos el nombre original del cliente
-        const unique = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
-        cb(null, unique);
-    }
-});
 
 const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -60,17 +43,8 @@ const upload = multer({
 const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']);
 const MAX_AVATAR_SIZE = 6 * 1024 * 1024; // 6 MB
 
-const avatarStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, AVATAR_DIR),
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const unique = `avatar-${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
-        cb(null, unique);
-    }
-});
-
 const avatarUpload = multer({
-    storage: avatarStorage,
+    storage,
     limits: {
         fileSize: MAX_AVATAR_SIZE,
         files: 1
@@ -104,16 +78,6 @@ const uploadAvatar = (req, res, next) => {
     });
 };
 
-// Borra una foto de perfil antigua del disco. Solo acepta rutas generadas
-// por nosotros dentro de /uploads/avatars para evitar rutas arbitrarias.
-const removeAvatarFile = (url) => {
-    if (typeof url !== 'string') return;
-    if (!/^\/uploads\/avatars\/[A-Za-z0-9._-]+$/.test(url)) return;
-
-    const file = path.join(__dirname, '../../public', url);
-    fs.unlink(file, () => {});
-};
-
 // Middleware que ejecuta multer y convierte sus errores en un mensaje
 // legible para volver a mostrar el formulario sin romper la petición.
 const uploadPostImages = (req, res, next) => {
@@ -134,18 +98,9 @@ const uploadPostImages = (req, res, next) => {
     });
 };
 
-// Elimina del disco los archivos subidos (se usa si la validación falla)
-const removeUploadedFiles = (files = []) => {
-    files.forEach((file) => {
-        fs.unlink(file.path, () => {});
-    });
-};
-
 module.exports = {
     uploadPostImages,
     uploadAvatar,
-    removeUploadedFiles,
-    removeAvatarFile,
     ALLOWED_EXTENSIONS,
     AVATAR_EXTENSIONS,
     MAX_FILE_SIZE,

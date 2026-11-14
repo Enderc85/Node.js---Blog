@@ -1,6 +1,6 @@
 const postService = require('../services/post.services');
 const realtime = require('../services/realtime.services');
-const { removeUploadedFiles } = require('../middlewares/upload');
+const mediaService = require('../services/media.services');
 
 // Convierte el autor de un post en el slug que usan las URLs /posts/:username/:id
 const authorSlug = (author) => {
@@ -89,10 +89,9 @@ const store = async (req, res) => {
     const files = Array.isArray(req.files) ? req.files : [];
     const title = (req.body.title || '').trim();
     const description = (req.body.description || req.body.content || '').trim();
+    let savedUrls = [];
 
     const renderError = (message, status = 400) => {
-        // Si algo falla, no dejamos archivos huérfanos en el disco
-        removeUploadedFiles(files);
         return res.status(status).render('posts/postCreate', {
             title: 'Crear un nuevo post',
             error: message,
@@ -122,18 +121,21 @@ const store = async (req, res) => {
             return renderError('Debes subir al menos una imagen (JPG, JPEG, PNG, HEIC o RAW).');
         }
 
-        const imageUrls = files.map((file) => `/uploads/posts/${file.filename}`);
+        // Las imágenes se guardan en la base de datos y se sirven desde /media.
+        savedUrls = await mediaService.saveManyMedia(files);
 
         // createdAt lo rellena Prisma/PostgreSQL con la fecha y hora actuales
         const newPost = await postService.createPost({
             title,
             content: description,
-            images: imageUrls,
+            images: savedUrls,
             authorId: req.user.id
         });
 
         return res.redirect(`/posts/${authorSlug(newPost.author)}/${newPost.id}`);
     } catch (error) {
+        // Si el post no llega a crearse, no dejamos las imágenes huérfanas.
+        await Promise.all(savedUrls.map((url) => mediaService.deleteMediaByUrl(url)));
         console.error('Error al crear post:', error);
         return renderError('No se pudo crear el post. Inténtalo de nuevo.', 500);
     }

@@ -63,6 +63,20 @@ model PostImage {
   @@map("post_images")
 }
 
+// Archivos subidos por los usuarios (portadas, galerías y avatares).
+// Se guardan en la base de datos para que estén disponibles desde cualquier
+// equipo o despliegue, no solo desde el que hizo la subida.
+model Media {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@map("media")
+}
+
 model Comment {
   id        Int      @id @default(autoincrement())
   content   String

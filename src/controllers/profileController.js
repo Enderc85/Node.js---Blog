@@ -1,5 +1,5 @@
 const profileService = require('../services/profile.services');
-const { removeAvatarFile } = require('../middlewares/upload');
+const mediaService = require('../services/media.services');
 
 const asText = (value) => (typeof value === 'string' ? value.trim() : '');
 
@@ -96,12 +96,12 @@ const updatePersonal = async (req, res) => {
         avatar: user.avatar
     };
 
-    const uploaded = req.file ? `/uploads/avatars/${req.file.filename}` : undefined;
+    const uploaded = req.file ? await mediaService.saveMedia(req.file) : undefined;
     const removeAvatar = req.body.removeAvatar === '1';
 
     const fail = async (message, status = 400) => {
         // Si se subió una foto pero la validación falla, no la dejamos huérfana.
-        if (uploaded) removeAvatarFile(uploaded);
+        if (uploaded) await mediaService.deleteMediaByUrl(uploaded);
 
         try {
             return await renderPersonal(res, { status, error: message, form });
@@ -135,9 +135,9 @@ const updatePersonal = async (req, res) => {
             featuredPostId: form.featuredPostId || null
         });
 
-        // La foto anterior ya no se usa: la borramos del disco.
+        // La foto anterior ya no se usa: la borramos.
         if (user.avatar && (uploaded || removeAvatar)) {
-            removeAvatarFile(user.avatar);
+            await mediaService.deleteMediaByUrl(user.avatar);
         }
 
         return res.redirect('/personal?guardado=1');

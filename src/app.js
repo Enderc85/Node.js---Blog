@@ -55,10 +55,12 @@ const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');  // <-- NUEVO
 const postRoutes = require('./routes/post.routes');  // <-- RUTAS CON SLUGS
 const adminRoutes = require('./routes/admin.routes');
+const mediaRoutes = require('./routes/media.routes');
 
 app.use('/', indexRoutes);
 app.use('/posts', postRoutes);
 app.use('/admin', adminRoutes);
+app.use('/media', mediaRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);  // <-- NUEVO
 

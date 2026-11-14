@@ -2,6 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const prisma = require('../config/db');
 const { isPreviewableImage } = require('./post.services');
+const { isMediaUrl, deleteMediaByUrl } = require('./media.services');
 
 const UPLOAD_URL_PREFIX = '/uploads/posts/';
 const UPLOAD_DIR = path.join(__dirname, '../../public/uploads/posts');
@@ -17,6 +18,31 @@ const localFilePath = (url) => {
     if (!fullPath.startsWith(UPLOAD_DIR + path.sep)) return null;
 
     return fullPath;
+};
+
+// Borra el archivo de una URL cuando ya no lo referencia nadie.
+// Soporta las imágenes nuevas (/media/...) y las antiguas guardadas en disco
+// (/uploads/posts/...), por si quedan datos de antes del cambio.
+const removeUnusedFile = async (url) => {
+    if (isMediaUrl(url)) {
+        // deleteMediaByUrl ya comprueba que no queden referencias.
+        await deleteMediaByUrl(url);
+        return;
+    }
+
+    const filePath = localFilePath(url);
+    if (!filePath) return;
+
+    const [coverRefs, galleryRefs, libraryRefs, avatarRefs] = await Promise.all([
+        prisma.post.count({ where: { image: url } }),
+        prisma.postImage.count({ where: { url } }),
+        prisma.images.count({ where: { url } }),
+        prisma.user.count({ where: { avatar: url } })
+    ]);
+
+    if (coverRefs + galleryRefs + libraryRefs + avatarRefs === 0) {
+        await fs.unlink(filePath).catch(() => {});
+    }
 };
 
 const authorSlug = (author) => {
@@ -58,7 +84,7 @@ const getDashboardData = async () => {
                     inGallery: false,
                     galleryIds: [],
                     previewable: isPreviewableImage(url),
-                    local: url.startsWith(UPLOAD_URL_PREFIX),
+                    local: isMediaUrl(url) || url.startsWith(UPLOAD_URL_PREFIX),
                     post,
                     postUrl: `/posts/${authorSlug(post.author)}/${post.id}`,
                     authorName: post.author.name || post.author.email.split('@')[0]
@@ -142,18 +168,8 @@ const deletePostImage = async ({ postId, url }) => {
         }
     });
 
-    // Borramos el archivo físico solo si ya no lo referencia ninguna parte de la BD
-    const filePath = localFilePath(url);
-    if (filePath) {
-        const [coverRefs, galleryRefs] = await Promise.all([
-            prisma.post.count({ where: { image: url } }),
-            prisma.postImage.count({ where: { url } })
-        ]);
-
-        if (coverRefs + galleryRefs === 0) {
-            await fs.unlink(filePath).catch(() => {});
-        }
-    }
+    // Borramos el archivo solo si ya no lo referencia ninguna parte de la BD
+    await removeUnusedFile(url);
 
     return { ok: true };
 };
@@ -168,18 +184,7 @@ const deleteLibraryImage = async (id) => {
 
     await prisma.images.delete({ where: { id: imageId } });
 
-    const filePath = localFilePath(image.url);
-    if (filePath) {
-        const [coverRefs, galleryRefs, libraryRefs] = await Promise.all([
-            prisma.post.count({ where: { image: image.url } }),
-            prisma.postImage.count({ where: { url: image.url } }),
-            prisma.images.count({ where: { url: image.url } })
-        ]);
-
-        if (coverRefs + galleryRefs + libraryRefs === 0) {
-            await fs.unlink(filePath).catch(() => {});
-        }
-    }
+    await removeUnusedFile(image.url);
 
     return { ok: true };
 };
@@ -210,21 +215,7 @@ const deletePost = async (postId) => {
     // PostImage, Comment y Like se eliminan en cascada según el esquema.
     await prisma.post.delete({ where: { id } });
 
-    await Promise.all([...urls].map(async (url) => {
-        const filePath = localFilePath(url);
-        if (!filePath) return;
-
-        const [coverRefs, galleryRefs, libraryRefs] = await Promise.all([
-            prisma.post.count({ where: { image: url } }),
-            prisma.postImage.count({ where: { url } }),
-            prisma.images.count({ where: { url } })
-        ]);
-
-        // Solo borramos el archivo si ninguna otra parte de la BD lo usa.
-        if (coverRefs + galleryRefs + libraryRefs === 0) {
-            await fs.unlink(filePath).catch(() => {});
-        }
-    }));
+    await Promise.all([...urls].map((url) => removeUnusedFile(url)));
 
     return { ok: true, title: post.title };
 };
