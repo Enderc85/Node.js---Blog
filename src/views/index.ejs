@@ -19,7 +19,7 @@
                         <% const featAuthorSlug = feat.author ? (feat.author.name || feat.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
                         <a href="/posts/<%= featAuthorSlug %>/<%= feat.id %>" class="recommendation-card-link" style="text-decoration: none;">
                             <article class="recommendation-card">
-                                <img src="<%= feat.image || 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=700&q=80' %>" alt="<%= feat.title %>" class="rec-card-img">
+                                <img src="<%= feat.image || 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=700&q=80' %>" alt="<%= feat.title %>" class="rec-card-img" decoding="async">
                                 <div class="rec-card-overlay">
                                     <span class="rec-badge">Destacado</span>
                                     <h3><%= feat.title %></h3>
@@ -69,7 +69,7 @@
                             <% if (post.image) { %>
                                 <div class="post-media-frame">
                                     <a href="/posts/<%= authorSlug %>/<%= post.id %>">
-                                        <img src="<%= post.image %>" alt="<%= post.title %>" class="post-image" loading="lazy">
+                                        <img src="<%= post.image %>" alt="<%= post.title %>" class="post-image" loading="lazy" decoding="async">
                                     </a>
                                 </div>
                             <% } %>
@@ -137,7 +137,7 @@
                                 <% const recAuthorSlug = recent.author ? (recent.author.name || recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
                                 <a href="/posts/<%= recAuthorSlug %>/<%= recent.id %>" class="recent-post-item">
                                     <% if (recent.image) { %>
-                                        <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb">
+                                        <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb" loading="lazy" decoding="async">
                                     <% } %>
                                     <div class="recent-post-meta">
                                         <h5><%= recent.title %></h5>
@@ -201,7 +201,7 @@
             ${post.image ? `
                 <div class="post-media-frame">
                     <a href="${post.url}">
-                        <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy">
+                        <img src="${post.image}" alt="${post.title}" class="post-image" loading="lazy" decoding="async">
                     </a>
                 </div>
             ` : ''}

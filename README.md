@@ -102,6 +102,20 @@ Notas:
 - Los fallbacks en CSS (contenido visible a los 3,6 s y loader oculto a los 4 s)
   son fijos a propósito: solo actúan si el script no se ejecuta.
 
+## Rendimiento
+
+- El fondo decorativo (glows y patrón de formas) es estático: ya no hay
+  animaciones CSS a pantalla completa, así que no se recalcula ni repinta el
+  fondo en cada fotograma. El paralaje con el ratón se mantiene y se desactiva
+  en pantallas táctiles o con `prefers-reduced-motion`.
+- Las tarjetas que se repiten (posts del feed y widgets de la barra lateral)
+  usan una superficie translúcida sin `backdrop-filter`; el desenfoque se
+  reserva para el header, los modales y las tarjetas únicas.
+- La imagen de fondo del login y del registro es local y ligera
+  (`public/images/auth-bg.jpg`), en lugar de descargarse de Unsplash.
+- Las imágenes de los posts usan `loading="lazy"` y `decoding="async"` para no
+  bloquear el renderizado.
+
 ## Administración
 
 El panel de administración está disponible en `/admin` y solo pueden entrar

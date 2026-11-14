@@ -1,12 +1,12 @@
 /* ===================================================
    LuminaBlog — Capa ambiente del fondo (paralaje)
    ---------------------------------------------------
-   Las capas de "lluvia" (html::before/::after definidas en
-   lumina-theme.css) caen por CSS. Este script añade la
-   interacción con la posición del usuario: sigue el cursor
-   con suavizado (lerp) y publica --mx/--my en <html>, que
-   cada capa lee con un factor distinto (lejos sutil, cerca
-   marcado) para dar sensación de profundidad.
+   Las capas de formas (html::before/::after definidas en
+   lumina-theme.css) son estáticas para no repintar el fondo
+   continuamente. Este script añade únicamente la interacción
+   con la posición del usuario: sigue el cursor con suavizado
+   (lerp) y publica --mx/--my en <html>, que cada capa lee con
+   un factor distinto (lejos sutil, cerca marcado).
    Se desactiva en táctil o con movimiento reducido.
    =================================================== */
 (function () {

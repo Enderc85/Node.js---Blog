@@ -1,7 +1,7 @@
 /* ===================================================
    LuminaBlog — Tema oscuro "Telegram editorial"
    Capa de tema sobre modern-index.css:
-   - Fondo grafito con glows difuminados y drift sutil
+   - Fondo grafito con glows difuminados (estático, sin coste por fotograma)
    - Patrón de formas repetidas randomizadas (estilo Telegram)
    - Tarjetas de cristal oscuro (glassmorphism)
    - Tipografía Fraunces (display) + Manrope (UI)
@@ -13,6 +13,9 @@
     --viewer-bg: #0a0c13;
     --surface-glass: rgba(24, 28, 41, 0.55);
     --surface-glass-2: rgba(30, 35, 50, 0.68);
+    /* Superficie para elementos repetidos (tarjetas del feed, widgets):
+       sin backdrop-filter, más opaca para mantener la legibilidad. */
+    --surface-card: rgba(24, 28, 41, 0.76);
     --surface-solid: #1a1f2c;
     --border-soft: rgba(255, 255, 255, 0.08);
     --border-medium: rgba(255, 255, 255, 0.16);
@@ -26,9 +29,6 @@
     --shadow-card: 0 18px 40px -18px rgba(5, 7, 12, 0.8);
     --shadow-card-hover: 0 26px 60px -20px rgba(5, 7, 12, 0.95);
     --radius-card: 1.25rem;
-    /* Lluvia de fondo: duración de un ciclo por capa */
-    --rain-far-duration: 52s;
-    --rain-near-duration: 40s;
 }
 
 /* ===================================================
@@ -46,11 +46,15 @@ body {
     font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Capa de color: glows suaves muy difuminados con deriva lenta */
+/* Capa de color: glows suaves muy difuminados.
+   Los degradados radiales ya son suaves por sí mismos: el antiguo
+   filter: blur(52px) obligaba a rasterizar una capa enorme. Además
+   ya no se anima: el fondo estático evita recalcular y repintar una
+   capa a pantalla completa en cada fotograma. */
 body::before {
     content: '';
     position: fixed;
-    inset: -14vmax;
+    inset: -2vmax;
     z-index: -2;
     pointer-events: none;
     background:
@@ -59,73 +63,51 @@ body::before {
         radial-gradient(46% 44% at 72% 84%, rgba(240, 171, 90, 0.14), transparent 72%),
         radial-gradient(40% 38% at 10% 88%, rgba(139, 92, 246, 0.13), transparent 70%),
         radial-gradient(30% 26% at 50% 48%, rgba(99, 102, 241, 0.06), transparent 75%);
-    filter: blur(52px);
-    will-change: transform;
-    animation: lumina-drift 90s ease-in-out infinite alternate;
 }
 
-@keyframes lumina-drift {
-    0% {
-        transform: translate3d(-1.5%, -1%, 0) scale(1);
-    }
-
-    50% {
-        transform: translate3d(1.5%, 1.5%, 0) scale(1.04);
-    }
-
-    100% {
-        transform: translate3d(-1%, 2%, 0) scale(1);
-    }
-}
-
-/* ---------- Lluvia de formas (dos capas con profundidad) ----------
-   Caen por CSS: cada ciclo avanza exactamente un tile del patrón,
-   así el bucle es perfecto y sin costuras. El desplazamiento
-   --mx/--my lo publica js/ambient.js según la posición del cursor:
-   la capa lejana se mueve apenas y la cercana bastante más. */
+/* ---------- Patrón de formas (dos capas con profundidad) ----------
+   El patrón es estático. El desplazamiento --mx/--my lo publica
+   js/ambient.js según la posición del cursor: la capa lejana se
+   mueve apenas y la cercana bastante más. */
 html::before {
-    /* Capa lejana: formas pequeñas y caída lenta */
+    /* Capa lejana: formas pequeñas */
     content: '';
     position: fixed;
-    inset: -180px;
+    top: 0;
+    left: -20px;
+    right: -20px;
+    bottom: 0;
     z-index: -4;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480' viewBox='0 0 480 480'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='150' cy='40' r='3'/%3E%3Ccircle cx='320' cy='180' r='4'/%3E%3Ccircle cx='60' cy='220' r='2.5'/%3E%3Ccircle cx='430' cy='380' r='3.5'/%3E%3Ccircle cx='200' cy='300' r='2.5'/%3E%3Ccircle cx='280' cy='60' r='2'/%3E%3Cpath d='M390 310l10 17h-20z'/%3E%3Cpath d='M180 382l9 15h-18z'/%3E%3Cpath d='M250 210l10 10-10 10-10-10z'/%3E%3Cpath d='M40 420l7 7-7 7-7-7z'/%3E%3Cpath d='M60 160l11 6v13l-11 6-11-6v-13z'/%3E%3Crect x='440' y='30' width='14' height='14' transform='rotate(25 447 37)'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='60' cy='74' r='20'/%3E%3Ccircle cx='420' cy='120' r='11'/%3E%3Ccircle cx='238' cy='406' r='24'/%3E%3Ccircle cx='86' cy='344' r='7'/%3E%3Ccircle cx='368' cy='268' r='16'/%3E%3Cpath d='M323 70h14M330 63v14'/%3E%3Cpath d='M104 150h12M110 144v12'/%3E%3Cpath d='M300 340q8-10 16 0t16 0'/%3E%3Cpath d='M130 260q7-9 14 0t14 0'/%3E%3Cpath d='M40 320a16 16 0 0 1 32 0'/%3E%3Cpath d='M350 430l24-18'/%3E%3Cpath d='M200 120l18-14'/%3E%3C/g%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 480px 480px;
+    background-position: 40px 0;
     opacity: 0.04;
-    animation: lumina-rain-far var(--rain-far-duration, 52s) linear infinite;
-    transform: translate3d(calc(var(--mx, 0) * -7px), calc(var(--my, 0) * -4px), 0);
-    will-change: transform;
+    /* Patrón estático + paralaje con el cursor. Sin animación continua:
+       se evita repintar una capa fija a pantalla completa cada fotograma. */
+    translate: calc(var(--mx, 0) * -7px) calc(var(--my, 0) * -4px);
+    will-change: translate;
 }
 
 html::after {
-    /* Capa cercana: formas mayores, cae algo más rápido y con más paralaje */
+    /* Capa cercana: formas mayores, más paralaje */
     content: '';
     position: fixed;
-    inset: -180px;
+    top: 0;
+    left: -20px;
+    right: -20px;
+    bottom: 0;
     z-index: -3;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480' viewBox='0 0 480 480'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='150' cy='40' r='3'/%3E%3Ccircle cx='320' cy='180' r='4'/%3E%3Ccircle cx='60' cy='220' r='2.5'/%3E%3Ccircle cx='430' cy='380' r='3.5'/%3E%3Ccircle cx='200' cy='300' r='2.5'/%3E%3Ccircle cx='280' cy='60' r='2'/%3E%3Cpath d='M390 310l10 17h-20z'/%3E%3Cpath d='M180 382l9 15h-18z'/%3E%3Cpath d='M250 210l10 10-10 10-10-10z'/%3E%3Cpath d='M40 420l7 7-7 7-7-7z'/%3E%3Cpath d='M60 160l11 6v13l-11 6-11-6v-13z'/%3E%3Crect x='440' y='30' width='14' height='14' transform='rotate(25 447 37)'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='60' cy='74' r='20'/%3E%3Ccircle cx='420' cy='120' r='11'/%3E%3Ccircle cx='238' cy='406' r='24'/%3E%3Ccircle cx='86' cy='344' r='7'/%3E%3Ccircle cx='368' cy='268' r='16'/%3E%3Cpath d='M323 70h14M330 63v14'/%3E%3Cpath d='M104 150h12M110 144v12'/%3E%3Cpath d='M300 340q8-10 16 0t16 0'/%3E%3Cpath d='M130 260q7-9 14 0t14 0'/%3E%3Cpath d='M40 320a16 16 0 0 1 32 0'/%3E%3Cpath d='M350 430l24-18'/%3E%3Cpath d='M200 120l18-14'/%3E%3C/g%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 640px 640px;
+    background-position: 300px 0;
     opacity: 0.055;
-    animation: lumina-rain-near var(--rain-near-duration, 40s) linear infinite;
-    transform: translate3d(calc(var(--mx, 0) * -16px), calc(var(--my, 0) * -10px), 0);
-    will-change: transform;
-}
-
-/* Un ciclo = exactamente un tile de altura: bucle sin costuras.
-   La capa cercana arranca desplazada en X para descorrelacionarse
-   visualmente de la lejana. */
-@keyframes lumina-rain-far {
-    from { background-position: 40px 0px; }
-    to { background-position: 40px 480px; }
-}
-
-@keyframes lumina-rain-near {
-    from { background-position: 300px 160px; }
-    to { background-position: 300px 800px; }
+    /* Igual que la capa lejana: estática, solo paralaje al mover el ratón. */
+    translate: calc(var(--mx, 0) * -16px) calc(var(--my, 0) * -10px);
+    will-change: translate;
 }
 
 /* Viñeta: oscurece suavemente los bordes para dar profundidad */
@@ -136,15 +118,6 @@ body::after {
     z-index: -1;
     pointer-events: none;
     background-image: radial-gradient(120% 95% at 50% 42%, transparent 52%, rgba(8, 10, 15, 0.42) 100%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-    body::before,
-    html::before,
-    html::after {
-        animation: none;
-    }
 }
 
 /* Selección de texto con el acento dorado */
@@ -348,11 +321,11 @@ h5,
     color: var(--text-primary);
 }
 
-/* Tarjeta de post: cristal oscuro */
+/* Tarjeta de post: superficie translúcida sin desenfoque.
+   Se repite muchas veces en el feed, así que evitar backdrop-filter
+   ahorra trabajo de composición al hacer scroll. */
 .post-item-card {
-    background: var(--surface-glass);
-    backdrop-filter: blur(18px) saturate(1.35);
-    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    background: var(--surface-card);
     border: 1px solid var(--border-soft);
     box-shadow: var(--shadow-card);
 }
@@ -360,12 +333,6 @@ h5,
 .post-item-card:hover {
     border-color: var(--border-medium);
     box-shadow: var(--shadow-card-hover);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .post-item-card {
-        background: var(--surface-solid);
-    }
 }
 
 .author-avatar-placeholder {
@@ -478,9 +445,7 @@ h5,
    =================================================== */
 
 .sidebar-widget {
-    background: var(--surface-glass);
-    backdrop-filter: blur(18px) saturate(1.35);
-    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    background: var(--surface-card);
     border: 1px solid var(--border-soft);
     box-shadow: var(--shadow-card);
 }
@@ -510,12 +475,10 @@ h5,
     color: var(--text-muted);
 }
 
-/* Widget newsletter: cristal con toque dorado */
+/* Widget newsletter: toque dorado sobre superficie translúcida */
 .newsletter-widget {
-    background: linear-gradient(145deg, rgba(242, 193, 78, 0.12), rgba(232, 165, 75, 0.04)), var(--surface-glass);
+    background: linear-gradient(145deg, rgba(242, 193, 78, 0.12), rgba(232, 165, 75, 0.04)), var(--surface-card);
     border: 1px solid rgba(242, 193, 78, 0.28);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
 }
 
 .newsletter-widget h4 {

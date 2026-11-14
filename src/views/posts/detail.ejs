@@ -31,7 +31,7 @@
                     <% gallery.forEach((img) => { %>
                         <% if (canPreview(img.url)) { %>
                             <a href="<%= img.url %>" target="_blank" rel="noopener" class="post-gallery-item">
-                                <img src="<%= img.url %>" alt="<%= post.title %>" class="post-detail-image" loading="lazy">
+                                <img src="<%= img.url %>" alt="<%= post.title %>" class="post-detail-image" loading="lazy" decoding="async">
                             </a>
                         <% } else { %>
                             <a href="<%= img.url %>" target="_blank" rel="noopener" download
@@ -153,7 +153,7 @@
                             <% const authorSlug = recent.author ? (recent.author.name || recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
                             <a href="/posts/<%= authorSlug %>/<%= recent.id %>" class="recent-post-item">
                                 <% if (recent.image) { %>
-                                    <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb">
+                                    <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb" loading="lazy" decoding="async">
                                 <% } %>
                                 <div class="recent-post-meta">
                                     <h5><%= recent.title %></h5>

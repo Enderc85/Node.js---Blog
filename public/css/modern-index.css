@@ -53,7 +53,7 @@ body:has(.auth-page-container) {
 .auth-bg-layer {
     position: absolute;
     inset: -30px;
-    background-image: url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1920&q=80');
+    background-image: url('/images/auth-bg.jpg');
     background-size: cover;
     background-position: center;
     filter: blur(14px) brightness(0.65);
