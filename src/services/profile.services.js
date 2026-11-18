@@ -305,6 +305,7 @@ module.exports = {
     getProfiles,
     getProfileById,
     getProfileBySlug,
+    getProfileSlugMap: getAllSlugs,
     getOwnPosts,
     updateProfile
 };

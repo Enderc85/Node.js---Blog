@@ -1,6 +1,7 @@
 const postService = require('../services/post.services');
 const realtime = require('../services/realtime.services');
 const mediaService = require('../services/media.services');
+const profileService = require('../services/profile.services');
 
 // Convierte el autor de un post en el slug que usan las URLs /posts/:username/:id
 const authorSlug = (author) => {
@@ -45,11 +46,13 @@ const getPostByUserAndId = async (req, res) => {
         }
 
         const recentPosts = await postService.getRecentPosts(4);
+        const profileSlugs = await profileService.getProfileSlugMap();
 
         res.render('posts/detail', {
             title: post.title,
             post,
             recentPosts,
+            profileSlugs,
             commentFeedback: COMMENT_MESSAGES[req.query.comment] || null,
             isPreviewImage: postService.isPreviewableImage
         });
