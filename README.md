@@ -252,3 +252,9 @@ npm run change-password -- correo@ejemplo.com --generate
   sección `Comentarios` del detalle del post.
 - Los contadores `numLikes` y `numComments` se actualizan en la misma transacción
   que crea o elimina la fila correspondiente.
+- Cada comentario se puede responder desde **Responder**. Las respuestas se
+  guardan con `parentId` y se muestran anidadas (un solo nivel: responder a una
+  respuesta la cuelga del comentario raíz).
+- Si la base de datos se creó antes de las respuestas, aplica el cambio con
+  `npm run add-comment-replies` (usa el driver de 443, no necesita el 5432). Es
+  idempotente; con `prisma db push` desde casa también se crea la columna.

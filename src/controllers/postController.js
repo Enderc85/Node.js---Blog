@@ -209,7 +209,8 @@ const storeComment = async (req, res) => {
         const result = await postService.addComment({
             postId: req.params.id,
             userId: req.user.id,
-            content: req.body.content
+            content: req.body.content,
+            parentId: req.body.parentId
         });
 
         if (!result.ok) {
@@ -217,6 +218,8 @@ const storeComment = async (req, res) => {
         }
 
         // Notifica al resto de pestañas/usuarios conectados por SSE
+        const slugs = await profileService.getProfileSlugMap();
+
         realtime.broadcast('comment', {
             postId: Number(req.params.id),
             numComments: result.numComments,
@@ -224,7 +227,9 @@ const storeComment = async (req, res) => {
                 id: result.comment.id,
                 content: result.comment.content,
                 createdAt: result.comment.createdAt,
-                author: result.comment.author
+                parentId: result.comment.parentId,
+                author: result.comment.author,
+                authorSlug: result.comment.author ? slugs.get(result.comment.author.id) || null : null
             }
         });
 

@@ -80,10 +80,20 @@ const getPostByUsernameAndId = async (username, id, userId = null) => {
                 orderBy: { position: 'asc' }
             },
             comments: {
+                // Solo los comentarios raíz; las respuestas van dentro de `replies`.
+                where: { parentId: null },
                 orderBy: { createdAt: 'desc' },
                 include: {
                     author: {
                         select: { id: true, name: true, email: true }
+                    },
+                    replies: {
+                        orderBy: { createdAt: 'asc' },
+                        include: {
+                            author: {
+                                select: { id: true, name: true, email: true }
+                            }
+                        }
                     }
                 }
             }
@@ -264,8 +274,9 @@ const toggleLike = async (postId, userId) => {
     });
 };
 
-// Añade un comentario de un usuario registrado a un post
-const addComment = async ({ postId, userId, content }) => {
+// Añade un comentario de un usuario registrado a un post.
+// Si se indica `parentId`, la respuesta se cuelga de ese comentario.
+const addComment = async ({ postId, userId, content, parentId = null }) => {
     const id = Number(postId);
     const uid = Number(userId);
     const text = (content || '').trim();
@@ -284,9 +295,28 @@ const addComment = async ({ postId, userId, content }) => {
 
     if (!post) return { ok: false, reason: 'notfound' };
 
+    // La respuesta solo puede apuntar a un comentario del mismo post.
+    let parent = null;
+
+    if (parentId !== null && parentId !== undefined && String(parentId).trim() !== '') {
+        const parentNumber = Number(parentId);
+
+        if (!Number.isInteger(parentNumber)) return { ok: false, reason: 'invalid' };
+
+        parent = await prisma.comment.findFirst({
+            where: { id: parentNumber, postId: id },
+            select: { id: true, parentId: true }
+        });
+
+        // No permitimos respuestas a respuestas: se cuelgan del comentario raíz.
+        if (!parent) return { ok: false, reason: 'notfound' };
+    }
+
+    const rootParentId = parent ? (parent.parentId || parent.id) : null;
+
     const [comment, updatedPost] = await prisma.$transaction([
         prisma.comment.create({
-            data: { postId: id, authorId: uid, content: text },
+            data: { postId: id, authorId: uid, content: text, parentId: rootParentId },
             include: {
                 author: { select: { id: true, name: true, email: true } }
             }

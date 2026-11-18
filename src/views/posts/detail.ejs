@@ -141,61 +141,18 @@
                                                     </div>
                                                     <% } %>
 
-                                                        <% if (post.comments && post.comments.length> 0) { %>
-                                                            <ul class="comment-list">
-                                                                <% post.comments.forEach((comment)=> { %>
-                                                                    <% const commentAuthor=comment.author ?
-                                                                        (comment.author.name ||
-                                                                        comment.author.email.split('@')[0]) : 'Anónimo'
-                                                                        ; %>
-                                                                        <% const commentAuthorSlug=comment.author &&
-                                                                            typeof profileSlugs !=='undefined' &&
-                                                                            profileSlugs ?
-                                                                            profileSlugs.get(comment.author.id) : null;
-                                                                            %>
-                                                                            <li class="comment-item"
-                                                                                data-comment-id="<%= comment.id %>">
-                                                                                <span class="comment-avatar">
-                                                                                    <%= commentAuthor.charAt(0).toUpperCase()
-                                                                                        %>
-                                                                                </span>
-                                                                                <div class="comment-body">
-                                                                                    <div class="comment-head">
-                                                                                        <strong>
-                                                                                            <% if (commentAuthorSlug) {
-                                                                                                %>
-                                                                                                <a href="/profiles/<%= commentAuthorSlug %>"
-                                                                                                    class="comment-author-link"
-                                                                                                    title="Ver el perfil de <%= commentAuthor %>">
-                                                                                                    <%= commentAuthor %>
-                                                                                                </a>
-                                                                                                <% } else { %>
-                                                                                                    <%= commentAuthor %>
-                                                                                                        <% } %>
-                                                                                        </strong>
-                                                                                        <time
-                                                                                            datetime="<%= new Date(comment.createdAt).toISOString() %>">
-                                                                                            <%= new
-                                                                                                Date(comment.createdAt).toLocaleDateString('es-ES',
-                                                                                                { day: 'numeric' ,
-                                                                                                month: 'short' ,
-                                                                                                year: 'numeric' }) %>
-                                                                                        </time>
-                                                                                    </div>
-                                                                                    <p>
-                                                                                        <%= comment.content %>
-                                                                                    </p>
-                                                                                </div>
-                                                                            </li>
-                                                                            <% }); %>
-                                                            </ul>
-                                                            <% } else { %>
-                                                                <div class="comment-empty">
-                                                                    <i class="fa-regular fa-comment-dots"></i>
-                                                                    <p>Todavía no hay comentarios. ¡Sé el primero en
-                                                                        opinar!</p>
-                                                                </div>
-                                                                <% } %>
+                                    <% if (post.comments && post.comments.length > 0) { %>
+                                        <ul class="comment-list">
+                                            <% post.comments.forEach((comment) => { %>
+                                                <%- include('comment', { comment, profileSlugs, user, postId: post.id }) %>
+                                            <% }); %>
+                                        </ul>
+                                    <% } else { %>
+                                        <div class="comment-empty">
+                                            <i class="fa-regular fa-comment-dots"></i>
+                                            <p>Todavía no hay comentarios. ¡Sé el primero en opinar!</p>
+                                        </div>
+                                    <% } %>
                                 </section>
 
                                 <footer class="post-detail-footer">
