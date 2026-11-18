@@ -2427,7 +2427,7 @@ textarea.profile-input {
 
 .profile-card-media-label {
     position: absolute;
-    left: 0.8rem;
+    right: 0.8rem;
     bottom: 0.75rem;
     z-index: 1;
     display: inline-flex;
@@ -3345,7 +3345,7 @@ html.intro-active .page-loader {
 }
 
 /* El contenido de la página espera y aparece cuando el logo despega */
-html.intro-active body > *:not(.page-loader) {
+html.intro-active body>*:not(.page-loader) {
     opacity: 0;
     /* Red de seguridad: si el JS fallara, el contenido aparece igualmente */
     animation: intro-content-safety 0.01s linear 3.6s forwards;
@@ -3357,7 +3357,7 @@ html.intro-active body > *:not(.page-loader) {
     }
 }
 
-html.intro-revealing body > *:not(.page-loader) {
+html.intro-revealing body>*:not(.page-loader) {
     opacity: 1;
     transition: opacity var(--intro-content-dur, 0.9s) ease;
 }
