@@ -40,27 +40,29 @@ const showProfiles = async (req, res) => {
 
 // ---------- /profiles/:id: perfil público de un usuario ----------
 
-// GET /profiles/:id → portada del usuario y feed de sus posts
+// GET /profiles/:slug → portada del usuario y feed de sus posts
 const showProfile = async (req, res) => {
-    const id = Number(req.params.id);
+    const param = String(req.params.slug || '').trim();
     const viewerId = res.locals.user ? res.locals.user.id : null;
 
-    if (!Number.isInteger(id) || id <= 0) {
-        return res.status(404).render('errors/404', {
-            title: 'Perfil no encontrado · LuminaBlog',
-            message: 'Ese perfil no existe.'
-        });
-    }
+    const notFound = () => res.status(404).render('errors/404', {
+        title: 'Perfil no encontrado · LuminaBlog',
+        message: 'Ese perfil no existe o ha sido eliminado.'
+    });
 
     try {
-        const profile = await profileService.getProfileById(id, viewerId);
+        // Enlaces antiguos por id: /profiles/3 → /profiles/nombre-del-usuario
+        if (/^\d+$/.test(param)) {
+            const legacy = await profileService.getProfileById(Number(param), viewerId);
 
-        if (!profile) {
-            return res.status(404).render('errors/404', {
-                title: 'Perfil no encontrado · LuminaBlog',
-                message: 'Ese perfil no existe o ha sido eliminado.'
-            });
+            if (!legacy) return notFound();
+
+            return res.redirect(301, `/profiles/${encodeURIComponent(legacy.slug)}`);
         }
+
+        const profile = await profileService.getProfileBySlug(param, viewerId);
+
+        if (!profile) return notFound();
 
         return res.render('profile', {
             title: `${profile.name} · LuminaBlog`,
@@ -71,6 +73,30 @@ const showProfile = async (req, res) => {
         return res.status(500).render('errors/500', {
             title: 'Error · LuminaBlog',
             message: 'No se pudo cargar el perfil. Inténtalo de nuevo.'
+        });
+    }
+};
+
+// GET /profiles/me → redirige al perfil público del usuario con sesión
+const showOwnProfile = async (req, res) => {
+    const user = res.locals.user;
+
+    try {
+        const profile = await profileService.getProfileById(user.id);
+
+        if (!profile) {
+            return res.status(404).render('errors/404', {
+                title: 'Perfil no encontrado · LuminaBlog',
+                message: 'Tu perfil no está disponible.'
+            });
+        }
+
+        return res.redirect(`/profiles/${encodeURIComponent(profile.slug)}`);
+    } catch (error) {
+        console.error('Error al abrir el perfil propio:', error);
+        return res.status(500).render('errors/500', {
+            title: 'Error · LuminaBlog',
+            message: 'No se pudo cargar tu perfil. Inténtalo de nuevo.'
         });
     }
 };
@@ -187,6 +213,7 @@ const updatePersonal = async (req, res) => {
 module.exports = {
     showProfiles,
     showProfile,
+    showOwnProfile,
     showPersonal,
     updatePersonal
 };

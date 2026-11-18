@@ -47,7 +47,7 @@
         <% } else { %>
             <div class="profiles-grid" id="profilesGrid">
                 <% profiles.forEach((profile) => { %>
-                    <a class="profile-card" href="/profiles/<%= profile.id %>" data-profile-id="<%= profile.id %>"
+                    <a class="profile-card" href="/profiles/<%= profile.slug %>" data-profile-id="<%= profile.id %>"
                         data-search="<%= (profile.name + ' ' + profile.handle + ' ' + profile.bio).toLowerCase() %>"
                         aria-label="Ver el perfil de <%= profile.name %>">
                         <div class="profile-card-media <%= profile.featured && profile.featured.image ? '' : 'is-empty' %>">

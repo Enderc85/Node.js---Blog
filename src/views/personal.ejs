@@ -53,7 +53,7 @@
                 <span>Volver a perfiles</span>
             </a>
             <% if (user && user.id) { %>
-                <a href="/profiles/<%= user.id %>" class="personal-back">
+                <a href="/profiles/<%= person.slug || user.id %>" class="personal-back">
                     <i class="fa-solid fa-eye"></i>
                     <span>Ver mi perfil público</span>
                 </a>
