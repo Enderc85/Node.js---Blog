@@ -1,0 +1,64 @@
+<%
+    const author = comment.author;
+    const authorName = author ? (author.name || author.email.split('@')[0]) : 'Anónimo';
+    const authorSlug = author && typeof profileSlugs !== 'undefined' && profileSlugs
+        ? profileSlugs.get(author.id) : null;
+    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+    const loggedIn = typeof user !== 'undefined' && user;
+%>
+<li class="comment-item" data-comment-id="<%= comment.id %>">
+    <span class="comment-avatar"><%= authorName.charAt(0).toUpperCase() %></span>
+
+    <div class="comment-body">
+        <div class="comment-head">
+            <strong>
+                <% if (authorSlug) { %>
+                    <a href="/profiles/<%= authorSlug %>" class="comment-author-link"
+                        title="Ver el perfil de <%= authorName %>"><%= authorName %></a>
+                <% } else { %>
+                    <%= authorName %>
+                <% } %>
+            </strong>
+            <time datetime="<%= new Date(comment.createdAt).toISOString() %>">
+                <%= new Date(comment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+            </time>
+        </div>
+
+        <p><%= comment.content %></p>
+
+        <div class="comment-actions">
+            <% if (replies.length > 0) { %>
+                <span class="comment-replies-count">
+                    <i class="fa-regular fa-comments"></i>
+                    <%= replies.length %> <%= replies.length === 1 ? 'respuesta' : 'respuestas' %>
+                </span>
+            <% } %>
+
+            <% if (loggedIn) { %>
+                <details class="comment-reply">
+                    <summary><i class="fa-solid fa-reply"></i> Responder</summary>
+                    <form action="/posts/<%= postId %>/comments" method="POST" class="comment-reply-form">
+                        <input type="hidden" name="parentId" value="<%= comment.id %>">
+                        <textarea name="content" rows="2" maxlength="1000" required
+                            placeholder="Responde a <%= authorName %>..."></textarea>
+                        <div class="comment-form-actions">
+                            <span class="comment-hint">Máximo 1000 caracteres</span>
+                            <button type="submit" class="btn-post-primary comment-reply-submit">
+                                <i class="fa-regular fa-paper-plane"></i>
+                                <span>Publicar respuesta</span>
+                            </button>
+                        </div>
+                    </form>
+                </details>
+            <% } %>
+        </div>
+
+        <% if (replies.length > 0) { %>
+            <ul class="comment-replies">
+                <% replies.forEach((reply) => { %>
+                    <%- include('comment', { comment: reply, profileSlugs, user, postId }) %>
+                <% }); %>
+            </ul>
+        <% } %>
+    </div>
+</li>

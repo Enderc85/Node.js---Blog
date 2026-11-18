@@ -10,7 +10,8 @@
     "dev": "node --watch src/server.js",
     "seed": "node prisma/seed.js",
     "migrate-media": "node scripts/migrate-uploads-to-db.js",
-    "make-admin": "node scripts/make-admin.js"
+    "make-admin": "node scripts/make-admin.js",
+    "add-comment-replies": "node scripts/add-comment-replies.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

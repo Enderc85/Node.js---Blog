@@ -3296,6 +3296,113 @@ body.profile-modal-open {
     outline: none;
 }
 
+/* ---------- Respuestas a comentarios ---------- */
+.comment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    margin-top: 0.35rem;
+}
+
+.comment-reply {
+    min-width: 0;
+}
+
+.comment-reply[open] {
+    flex: 1 1 100%;
+}
+
+.comment-reply summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    transition: color 0.2s ease;
+}
+
+.comment-reply summary::-webkit-details-marker {
+    display: none;
+}
+
+.comment-reply summary:hover,
+.comment-reply[open] summary {
+    color: var(--accent);
+}
+
+.comment-reply-form {
+    margin-top: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.comment-reply-form textarea {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--border-medium);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.comment-reply-form textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.comment-reply-form textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(242, 193, 78, 0.15);
+}
+
+.comment-reply-submit {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+}
+
+.comment-replies-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.comment-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin: 0.85rem 0 0;
+    padding: 0 0 0 1rem;
+    list-style: none;
+    border-left: 2px solid var(--border-soft);
+}
+
+.comment-replies .comment-item {
+    padding-bottom: 0.9rem;
+}
+
+.comment-replies .comment-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.comment-replies .comment-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+}
+
 .profile-page {
     max-width: 1180px;
     margin: 0 auto;
