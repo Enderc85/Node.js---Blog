@@ -57,6 +57,22 @@ Si `npx prisma db execute` responde `P1001: Can't reach database server` pero
 
 `npm run seed` sí funciona: usa el cliente de la app, no la CLI.
 
+### Ver la base de datos desde clase
+
+`npx prisma studio` **no funciona** si el 5432 está bloqueado: Studio usa
+conexión directa. Para consultar datos por terminal sin salir del 443:
+
+```bash
+npm run db:view                  # tablas y número de filas
+npm run db:view -- post          # filas de una tabla
+npm run db:view -- user --limit=3
+npm run db:view -- media --json
+```
+
+El visor usa el mismo cliente que la app (`src/config/db.js`), oculta el campo
+`password` y no muestra el binario de `media`. Como alternativa con interfaz,
+Prisma Console → tu base de datos → **Studio** (también va por HTTPS).
+
 ## Almacenamiento de imágenes
 
 Las imágenes que suben los usuarios (portadas, galerías y fotos de perfil) se
@@ -182,6 +198,26 @@ npm run make-admin -- correo@ejemplo.com --revoke
 
 También se pueden usar las variables `ADMIN_EMAIL`, `ADMIN_PASSWORD` y
 `ADMIN_NAME`. El seed de desarrollo crea `admin@blog.com` / `password123`.
+
+### Cambiar la contraseña de un usuario
+
+```bash
+npm run change-password -- --list                  # ver usuarios
+npm run change-password -- correo@ejemplo.com      # pide la contraseña (oculta)
+npm run change-password -- correo@ejemplo.com "nueva-contraseña"
+npm run change-password -- --id 3                  # buscar por id
+npm run change-password -- correo@ejemplo.com --generate
+```
+
+- Si no indicas la contraseña, se pide dos veces por terminal sin mostrarla.
+- `--generate` crea una contraseña aleatoria de 16 caracteres y la muestra una
+  sola vez; cópiala en ese momento.
+- Mínimo 6 caracteres. El hash se guarda con bcrypt (10 rondas), igual que en el
+  registro.
+- No invalida los tokens JWT ya emitidos: una sesión abierta sigue activa hasta
+  que caduque. Para expulsar a alguien de inmediato habría que rotar `SECRET`.
+- Usa el cliente de la app, así que funciona por el 443 aunque el 5432 esté
+  bloqueado.
 
 ## Likes y comentarios
 

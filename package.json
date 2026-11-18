@@ -9,6 +9,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node prisma/seed.js",
+    "db:view": "node scripts/db-view.js",
+    "change-password": "node scripts/change-password.js",
     "migrate-media": "node scripts/migrate-uploads-to-db.js",
     "make-admin": "node scripts/make-admin.js"
   },
