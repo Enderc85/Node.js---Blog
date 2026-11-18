@@ -84,6 +84,9 @@ router.post('/api/contact', contactController.submitContactJson);
 // Sección pública de perfiles: ranking y buscador
 router.get('/profiles', profileController.showProfiles);
 
+// Perfil público de un usuario: portada, biografía y feed de sus posts
+router.get('/profiles/:id', profileController.showProfile);
+
 // Espacio personal: datos y edición del perfil propio
 router.get('/personal', authRequiredPage, profileController.showPersonal);
 router.post('/personal', authRequiredPage, uploadAvatar, profileController.updatePersonal);

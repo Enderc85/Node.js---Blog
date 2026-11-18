@@ -77,7 +77,7 @@
                     <span>Home</span>
                 </a>
                 <a href="/profiles"
-                    class="nav-link <%= (typeof currentPath !== 'undefined' && (currentPath === '/profiles' || currentPath === '/profile' || currentPath === '/personal')) ? 'active' : '' %>">
+                    class="nav-link <%= (typeof currentPath !== 'undefined' && (currentPath === '/profiles' || currentPath.startsWith('/profiles/') || currentPath === '/profile' || currentPath === '/personal')) ? 'active' : '' %>">
                     <i class="fa-solid fa-users"></i>
                     <span>Perfiles</span>
                 </a>
@@ -111,7 +111,7 @@
                             <span>Administración</span>
                         </a>
                     <% } %>
-                    <a href="/personal" class="user-pill user-pill-link" title="Mi perfil">
+                    <a href="/profiles/<%= user.id %>" class="user-pill user-pill-link" title="Mi perfil">
                         <% if (user.avatar) { %>
                             <img src="<%= user.avatar %>" alt="" class="user-pill-avatar">
                         <% } else { %>

@@ -47,10 +47,18 @@
             Cambia tu foto, tu nombre, tu descripción y el post que mejor te representa.
             Así te verá el resto de la comunidad.
         </p>
-        <a href="/profiles" class="personal-back">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Volver a perfiles</span>
-        </a>
+        <div class="personal-hero-actions">
+            <a href="/profiles" class="personal-back">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Volver a perfiles</span>
+            </a>
+            <% if (user && user.id) { %>
+                <a href="/profiles/<%= user.id %>" class="personal-back">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>Ver mi perfil público</span>
+                </a>
+            <% } %>
+        </div>
     </section>
 
     <% if (pageError) { %>
