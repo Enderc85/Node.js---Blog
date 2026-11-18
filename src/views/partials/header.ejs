@@ -111,7 +111,7 @@
                             <span>Administración</span>
                         </a>
                     <% } %>
-                    <a href="/profiles/<%= user.id %>" class="user-pill user-pill-link" title="Mi perfil">
+                    <a href="/profiles/me" class="user-pill user-pill-link" title="Mi perfil">
                         <% if (user.avatar) { %>
                             <img src="<%= user.avatar %>" alt="" class="user-pill-avatar">
                         <% } else { %>

@@ -12,6 +12,46 @@ const displayName = (user) => {
 // Mismo formato de slug de autor que usan las URLs /posts/:username/:id
 const authorSlug = (user) => displayName(user).toLowerCase().replace(/\s+/g, '-');
 
+// Slug del perfil público a partir del nombre visible:
+// "Elena García" → "elena-garcia".
+const profileSlug = (user) => {
+    const base = displayName(user)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return base || 'usuario';
+};
+
+// Mapa id → slug. Si dos usuarios comparten nombre, se añade el id
+// ("manel-r-5") para que cada perfil tenga una URL única.
+const buildSlugMap = (users) => {
+    const base = new Map(users.map((user) => [user.id, profileSlug(user)]));
+    const counts = new Map();
+
+    for (const slug of base.values()) {
+        counts.set(slug, (counts.get(slug) || 0) + 1);
+    }
+
+    const map = new Map();
+    for (const [id, slug] of base) {
+        map.set(id, counts.get(slug) > 1 ? `${slug}-${id}` : slug);
+    }
+
+    return map;
+};
+
+// El slug se calcula con todos los usuarios para que no cambie según el
+// buscador o según qué perfil se esté viendo.
+const getAllSlugs = async () =>
+    buildSlugMap(
+        await prisma.user.findMany({
+            select: { id: true, name: true, email: true }
+        })
+    );
+
 const toFeatured = (post, user) => {
     if (!post) return null;
 
@@ -39,7 +79,7 @@ const getProfiles = async ({ search = '' } = {}) => {
         }
         : undefined;
 
-    const [users, likeStats] = await Promise.all([
+    const [users, likeStats, slugs] = await Promise.all([
         prisma.user.findMany({
             where,
             select: {
@@ -65,7 +105,8 @@ const getProfiles = async ({ search = '' } = {}) => {
         prisma.post.groupBy({
             by: ['authorId'],
             _sum: { numLikes: true }
-        })
+        }),
+        getAllSlugs()
     ]);
 
     const likesMap = new Map(
@@ -80,6 +121,7 @@ const getProfiles = async ({ search = '' } = {}) => {
 
         return {
             id: user.id,
+            slug: slugs.get(user.id),
             name,
             handle: user.email.split('@')[0],
             bio: (user.bio || '').trim(),
@@ -148,7 +190,7 @@ const getProfileById = async (userId, viewerId = null) => {
 
     if (!user) return null;
 
-    const [likeStats, viewerLike] = await Promise.all([
+    const [likeStats, viewerLike, slugs] = await Promise.all([
         prisma.post.aggregate({
             where: { authorId: id },
             _sum: { numLikes: true }
@@ -158,7 +200,8 @@ const getProfileById = async (userId, viewerId = null) => {
                 where: { userId: Number(viewerId), post: { authorId: id } },
                 select: { postId: true }
             })
-            : Promise.resolve([])
+            : Promise.resolve([]),
+        getAllSlugs()
     ]);
 
     const likedIds = new Set(viewerLike.map((like) => like.postId));
@@ -167,6 +210,7 @@ const getProfileById = async (userId, viewerId = null) => {
 
     return {
         id: user.id,
+        slug: slugs.get(user.id),
         name,
         handle: user.email.split('@')[0],
         bio: (user.bio || '').trim(),
@@ -196,6 +240,20 @@ const getProfileById = async (userId, viewerId = null) => {
             })
         }))
     };
+};
+
+// Perfil público por el nombre del usuario: /profiles/elena-garcia
+const getProfileBySlug = async (value, viewerId = null) => {
+    const wanted = String(value || '').trim().toLowerCase();
+
+    if (!wanted) return null;
+
+    const slugs = await getAllSlugs();
+    const match = [...slugs.entries()].find(([, slug]) => slug === wanted);
+
+    if (!match) return null;
+
+    return getProfileById(match[0], viewerId);
 };
 
 // Posts propios para el selector "Post destacado".
@@ -246,6 +304,7 @@ module.exports = {
     authorSlug,
     getProfiles,
     getProfileById,
+    getProfileBySlug,
     getOwnPosts,
     updateProfile
 };

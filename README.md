@@ -176,8 +176,13 @@ Cada usuario registrado tiene un perfil público propio:
 | Ruta | Qué muestra |
 | ---- | ----------- |
 | `/profiles` | Ranking de actividad y buscador por nombre, usuario o descripción |
-| `/profiles/:id` | Perfil público: foto, nombre, biografía y grid de 3 columnas con sus posts |
+| `/profiles/:nombre` | Perfil público: foto, nombre, biografía y grid de 3 columnas con sus posts |
 | `/personal` | Editor del perfil propio (foto, nombre, biografía y post destacado) |
+
+- La URL usa el nombre del usuario, no su id: `/profiles/elena-garcia`. Los
+  acentos se quitan y los espacios pasan a guiones. Si dos usuarios comparten
+  nombre, se añade el id (`/profiles/manel-r-5`) para mantenerla única.
+- Los enlaces antiguos por id (`/profiles/3`) redirigen a la URL con el nombre.
 
 - Al pulsar cualquier tarjeta de `/profiles` se abre el perfil de ese usuario.
 - El grid de posts muestra todos sus posts, del más reciente al más antiguo, con
