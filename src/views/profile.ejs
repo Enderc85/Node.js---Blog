@@ -1,124 +1,143 @@
 <%- include('partials/header') %>
 
-<%
-    const person = typeof profile !== 'undefined' && profile ? profile : null;
-    const posts = person ? person.posts : [];
-%>
+    <% const person=typeof profile !=='undefined' && profile ? profile : null; const posts=person ? person.posts : [];
+        %>
 
-<% if (!person) { %>
+        <% if (!person) { %>
 
-    <main class="profiles-page">
-        <div class="profiles-empty">
-            <div class="profiles-empty-icon"><i class="fa-solid fa-user-slash"></i></div>
-            <h3>Perfil no disponible</h3>
-            <p>No hemos encontrado este perfil. <a href="/profiles">Volver a perfiles</a>.</p>
-        </div>
-    </main>
-
-<% } else { %>
-
-    <main class="profile-page">
-
-        <a href="/profiles" class="profile-back">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Volver a perfiles</span>
-        </a>
-
-        <!-- ================= Portada: foto + nombre ================= -->
-        <header class="profile-hero">
-            <div class="profile-hero-photo">
-                <% if (person.avatar) { %>
-                    <img src="<%= person.avatar %>" alt="Foto de <%= person.name %>" decoding="async">
-                <% } else { %>
-                    <span class="profile-hero-initial"><%= person.initial %></span>
-                <% } %>
-            </div>
-
-            <div class="profile-hero-info">
-                <span class="profile-hero-kicker">
-                    <i class="fa-solid fa-user"></i>
-                    @<%= person.handle %>
-                </span>
-
-                <h1 class="profile-hero-name"><%= person.name %></h1>
-
-                <div class="profile-hero-meta">
-                    <span><strong><%= person.postsCount %></strong> posts</span>
-                    <span><strong><%= person.likesReceived %></strong> me gusta</span>
-                    <span><strong><%= person.commentsCount %></strong> comentarios</span>
-                    <% if (person.joinedLabel) { %>
-                        <span class="profile-hero-joined">
-                            <i class="fa-regular fa-calendar"></i>
-                            Miembro desde <%= person.joinedLabel %>
-                        </span>
-                    <% } %>
-                </div>
-
-                <% if (person.isOwn) { %>
-                    <a href="/personal" class="profile-hero-edit">
-                        <i class="fa-solid fa-pen"></i>
-                        <span>Editar mi perfil</span>
-                    </a>
-                <% } %>
-            </div>
-        </header>
-
-        <!-- ================= Biografía ================= -->
-        <section class="profile-bio">
-            <h2>Biografía</h2>
-            <p>
-                <%= person.bio || 'Este perfil todavía no ha escrito su biografía.' %>
-            </p>
-        </section>
-
-        <!-- ================= Feed de posts (3 columnas) ================= -->
-        <section class="profile-posts">
-            <header class="profile-posts-head">
-                <h2>
-                    Posts de <%= person.name %>
-                    <span class="profile-posts-count"><%= posts.length %></span>
-                </h2>
-            </header>
-
-            <% if (posts.length === 0) { %>
+            <main class="profiles-page">
                 <div class="profiles-empty">
-                    <div class="profiles-empty-icon"><i class="fa-regular fa-images"></i></div>
-                    <h3>Todavía no hay posts</h3>
-                    <p>
-                        <% if (person.isOwn) { %>
-                            <a href="/create-post">Crea tu primer post</a> y aparecerá aquí.
-                        <% } else { %>
-                            Este perfil aún no ha publicado nada.
-                        <% } %>
-                    </p>
+                    <div class="profiles-empty-icon"><i class="fa-solid fa-user-slash"></i></div>
+                    <h3>Perfil no disponible</h3>
+                    <p>No hemos encontrado este perfil. <a href="/profiles">Volver a perfiles</a>.</p>
                 </div>
+            </main>
+
             <% } else { %>
-                <div class="profile-posts-grid">
-                    <% posts.forEach((post) => { %>
-                        <a href="<%= post.url %>" class="profile-post-card">
-                            <div class="profile-post-media <%= post.image ? '' : 'is-empty' %>">
-                                <% if (post.image) { %>
-                                    <img src="<%= post.image %>" alt="<%= post.title %>" loading="lazy" decoding="async">
+
+                <main class="profile-page">
+
+                    <a href="/profiles" class="profile-back">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Volver a perfiles</span>
+                    </a>
+
+                    <!-- ================= Portada: foto + nombre ================= -->
+                    <header class="profile-hero">
+                        <div class="profile-hero-photo">
+                            <% if (person.avatar) { %>
+                                <img src="<%= person.avatar %>" alt="Foto de <%= person.name %>" decoding="async">
                                 <% } else { %>
-                                    <span class="profile-post-placeholder"><i class="fa-regular fa-image"></i></span>
+                                    <span class="profile-hero-initial">
+                                        <%= person.initial %>
+                                    </span>
+                                    <% } %>
+                        </div>
+
+                        <div class="profile-hero-info">
+                            <span class="profile-hero-kicker">
+                                <i class="fa-solid fa-user"></i>
+                                @<%= person.handle %>
+                            </span>
+
+                            <h1 class="profile-hero-name">
+                                <%= person.name %>
+                            </h1>
+
+                            <div class="profile-hero-meta">
+                                <span><strong>
+                                        <%= person.postsCount %>
+                                    </strong> posts</span>
+                                <span><strong>
+                                        <%= person.likesReceived %>
+                                    </strong> me gusta</span>
+                                <span><strong>
+                                        <%= person.commentsCount %>
+                                    </strong> comentarios</span>
+                                <% if (person.joinedLabel) { %>
+                                    <span class="profile-hero-joined">
+                                        <i class="fa-regular fa-calendar"></i>
+                                        Miembro desde <%= person.joinedLabel %>
+                                    </span>
+                                    <% } %>
+                                        <section>
+                                            <!--biografía-->
+                                            <p>
+                                                <%= person.bio || '' %>
+                                            </p>
+                                        </section>
+
+                            </div>
+
+                            <% if (person.isOwn) { %>
+                                <a href="/personal" class="profile-hero-edit">
+                                    <i class="fa-solid fa-pen"></i>
+                                    <span>Editar mi perfil</span>
+                                </a>
                                 <% } %>
-                            </div>
+                        </div>
+                    </header>
 
-                            <div class="profile-post-body">
-                                <h3><%= post.title %></h3>
-                                <div class="profile-post-meta">
-                                    <span><i class="fa-regular fa-calendar"></i> <%= post.dateLabel %></span>
-                                    <span><i class="fa-solid fa-heart"></i> <%= post.numLikes %></span>
-                                    <span><i class="fa-regular fa-comment"></i> <%= post.numComments %></span>
+                    <!-- ================= Feed de posts (3 columnas) ================= -->
+                    <section class="profile-posts">
+                        <header class="profile-posts-head">
+                            <h2>
+                                Posts de <%= person.name %>
+                                    <span class="profile-posts-count">
+                                        <%= posts.length %>
+                                    </span>
+                            </h2>
+                        </header>
+
+                        <% if (posts.length===0) { %>
+                            <div class="profiles-empty">
+                                <div class="profiles-empty-icon"><i class="fa-regular fa-images"></i></div>
+                                <h3>Todavía no hay posts</h3>
+                                <p>
+                                    <% if (person.isOwn) { %>
+                                        <a href="/create-post">Crea tu primer post</a> y aparecerá aquí.
+                                        <% } else { %>
+                                            Este perfil aún no ha publicado nada.
+                                            <% } %>
+                                </p>
+                            </div>
+                            <% } else { %>
+                                <div class="profile-posts-grid">
+                                    <% posts.forEach((post)=> { %>
+                                        <a href="<%= post.url %>" class="profile-post-card">
+                                            <div class="profile-post-media <%= post.image ? '' : 'is-empty' %>">
+                                                <% if (post.image) { %>
+                                                    <img src="<%= post.image %>" alt="<%= post.title %>" loading="lazy"
+                                                        decoding="async">
+                                                    <% } else { %>
+                                                        <span class="profile-post-placeholder"><i
+                                                                class="fa-regular fa-image"></i></span>
+                                                        <% } %>
+                                            </div>
+
+                                            <div class="profile-post-body">
+                                                <h3>
+                                                    <%= post.title %>
+                                                </h3>
+                                                <div class="profile-post-meta">
+                                                    <span><i class="fa-regular fa-calendar"></i>
+                                                        <%= post.dateLabel %>
+                                                    </span>
+                                                    <span><i class="fa-solid fa-heart"></i>
+                                                        <%= post.numLikes %>
+                                                    </span>
+                                                    <span><i class="fa-regular fa-comment"></i>
+                                                        <%= post.numComments %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <% }); %>
                                 </div>
-                            </div>
-                        </a>
-                    <% }); %>
-                </div>
-            <% } %>
-        </section>
-    </main>
+                                <% } %>
+                    </section>
+                </main>
 
-<% } %>
+                <% } %>
 
-<%- include('partials/footer') %>
+                    <%- include('partials/footer') %>
