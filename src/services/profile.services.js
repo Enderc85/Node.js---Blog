@@ -108,6 +108,96 @@ const getProfiles = async ({ search = '' } = {}) => {
     return profiles.map((profile, index) => ({ ...profile, rank: index + 1 }));
 };
 
+// Perfil público de un usuario: datos, estadísticas y todos sus posts.
+// Devuelve null si el usuario no existe.
+const getProfileById = async (userId, viewerId = null) => {
+    const id = Number(userId);
+
+    if (!Number.isInteger(id) || id <= 0) return null;
+
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            bio: true,
+            avatar: true,
+            createdAt: true,
+            _count: {
+                select: { posts: true, comments: true }
+            },
+            posts: {
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    title: true,
+                    image: true,
+                    numLikes: true,
+                    numComments: true,
+                    createdAt: true,
+                    images: {
+                        orderBy: { position: 'asc' },
+                        take: 1,
+                        select: { url: true }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!user) return null;
+
+    const [likeStats, viewerLike] = await Promise.all([
+        prisma.post.aggregate({
+            where: { authorId: id },
+            _sum: { numLikes: true }
+        }),
+        viewerId
+            ? prisma.like.findMany({
+                where: { userId: Number(viewerId), post: { authorId: id } },
+                select: { postId: true }
+            })
+            : Promise.resolve([])
+    ]);
+
+    const likedIds = new Set(viewerLike.map((like) => like.postId));
+    const name = displayName(user);
+    const slug = authorSlug(user);
+
+    return {
+        id: user.id,
+        name,
+        handle: user.email.split('@')[0],
+        bio: (user.bio || '').trim(),
+        avatar: user.avatar || null,
+        initial: name.charAt(0).toUpperCase(),
+        joinedLabel: new Date(user.createdAt).toLocaleDateString('es-ES', {
+            month: 'long',
+            year: 'numeric'
+        }),
+        postsCount: user._count.posts,
+        commentsCount: user._count.comments,
+        likesReceived: likeStats._sum.numLikes || 0,
+        isOwn: viewerId ? Number(viewerId) === user.id : false,
+        posts: user.posts.map((post) => ({
+            id: post.id,
+            title: post.title,
+            // Si el post no tiene portada, usamos la primera imagen de la galería.
+            image: post.image || (post.images[0] ? post.images[0].url : null),
+            url: `/posts/${slug}/${post.id}`,
+            numLikes: post.numLikes || 0,
+            numComments: post.numComments || 0,
+            liked: likedIds.has(post.id),
+            dateLabel: new Date(post.createdAt).toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            })
+        }))
+    };
+};
+
 // Posts propios para el selector "Post destacado".
 const getOwnPosts = async (userId) => {
     return prisma.post.findMany({
@@ -155,6 +245,7 @@ module.exports = {
     displayName,
     authorSlug,
     getProfiles,
+    getProfileById,
     getOwnPosts,
     updateProfile
 };

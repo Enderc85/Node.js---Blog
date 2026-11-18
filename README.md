@@ -169,6 +169,23 @@ Notas:
 - Las imágenes de los posts usan `loading="lazy"` y `decoding="async"` para no
   bloquear el renderizado.
 
+## Perfiles
+
+Cada usuario registrado tiene un perfil público propio:
+
+| Ruta | Qué muestra |
+| ---- | ----------- |
+| `/profiles` | Ranking de actividad y buscador por nombre, usuario o descripción |
+| `/profiles/:id` | Perfil público: foto, nombre, biografía y grid de 3 columnas con sus posts |
+| `/personal` | Editor del perfil propio (foto, nombre, biografía y post destacado) |
+
+- Al pulsar cualquier tarjeta de `/profiles` se abre el perfil de ese usuario.
+- El grid de posts muestra todos sus posts, del más reciente al más antiguo, con
+  portada, fecha, me gusta y comentarios.
+- En tu propio perfil aparece el botón **Editar mi perfil**; en el resto no.
+- El botón de usuario de la cabecera («Mi perfil») lleva directamente a tu perfil
+  público, y desde `/personal` hay un enlace para verlo.
+
 ## Administración
 
 El panel de administración está disponible en `/admin` y solo pueden entrar

@@ -38,6 +38,43 @@ const showProfiles = async (req, res) => {
     }
 };
 
+// ---------- /profiles/:id: perfil público de un usuario ----------
+
+// GET /profiles/:id → portada del usuario y feed de sus posts
+const showProfile = async (req, res) => {
+    const id = Number(req.params.id);
+    const viewerId = res.locals.user ? res.locals.user.id : null;
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(404).render('errors/404', {
+            title: 'Perfil no encontrado · LuminaBlog',
+            message: 'Ese perfil no existe.'
+        });
+    }
+
+    try {
+        const profile = await profileService.getProfileById(id, viewerId);
+
+        if (!profile) {
+            return res.status(404).render('errors/404', {
+                title: 'Perfil no encontrado · LuminaBlog',
+                message: 'Ese perfil no existe o ha sido eliminado.'
+            });
+        }
+
+        return res.render('profile', {
+            title: `${profile.name} · LuminaBlog`,
+            profile
+        });
+    } catch (error) {
+        console.error('Error al cargar el perfil público:', error);
+        return res.status(500).render('errors/500', {
+            title: 'Error · LuminaBlog',
+            message: 'No se pudo cargar el perfil. Inténtalo de nuevo.'
+        });
+    }
+};
+
 // ---------- /personal: información y edición del perfil propio ----------
 
 // Carga el perfil propio (con sus estadísticas) y sus posts,
@@ -149,6 +186,7 @@ const updatePersonal = async (req, res) => {
 
 module.exports = {
     showProfiles,
+    showProfile,
     showPersonal,
     updatePersonal
 };
