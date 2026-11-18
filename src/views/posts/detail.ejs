@@ -1,195 +1,250 @@
 <%- include('../partials/header') %>
 
-<div class="modern-page post-detail-page">
-    <div class="post-detail-container">
-        <!-- Columna del artículo principal -->
-        <article class="post-main-content" data-post-id="<%= post.id %>">
-            <header class="post-detail-header">
-                <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
-                <h1 class="post-detail-title"><%= post.title %></h1>
-                <div class="post-meta-row">
-                    <% const postAuthorName = post.author ? (post.author.name || post.author.email.split('@')[0]) : 'Anónimo'; %>
-                    <% const postAuthorSlug = post.author && typeof profileSlugs !== 'undefined' && profileSlugs
-                        ? profileSlugs.get(post.author.id) : null; %>
-                    <span class="meta-item">
-                        <i class="fa-regular fa-user"></i>
-                        <% if (postAuthorSlug) { %>
-                            <a href="/profiles/<%= postAuthorSlug %>" class="meta-author-link"
-                                title="Ver el perfil de <%= postAuthorName %>"><%= postAuthorName %></a>
-                        <% } else { %>
-                            <%= postAuthorName %>
-                        <% } %>
-                    </span>
-                    <span class="meta-item"><i class="fa-regular fa-calendar"></i> <%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
-                    <span class="meta-item"><i class="fa-regular fa-heart"></i> <span class="like-count"><%= post.numLikes || 0 %></span> Me gusta</span>
-                </div>
-            </header>
+    <div class="modern-page post-detail-page">
+        <div class="post-detail-container">
+            <!-- Columna del artículo principal -->
+            <article class="post-main-content" data-post-id="<%= post.id %>">
+                <header class="post-detail-header">
+                    <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
+                    <h1 class="post-detail-title">
+                        <%= post.title %>
+                    </h1>
+                    <div class="post-meta-row">
+                        <% const postAuthorName=post.author ? (post.author.name || post.author.email.split('@')[0])
+                            : 'Anónimo' ; %>
+                            <% const postAuthorSlug=post.author && typeof profileSlugs !=='undefined' && profileSlugs ?
+                                profileSlugs.get(post.author.id) : null; %>
+                                <span class="meta-item">
+                                    <i class="fa-regular fa-user"></i>
+                                    <% if (postAuthorSlug) { %>
+                                        <a href="/profiles/<%= postAuthorSlug %>" class="meta-author-link"
+                                            title="Ver el perfil de <%= postAuthorName %>">
+                                            <%= postAuthorName %>
+                                        </a>
+                                        <% } else { %>
+                                            <%= postAuthorName %>
+                                                <% } %>
+                                </span>
+                                <span class="meta-item"><i class="fa-regular fa-calendar"></i>
+                                    <%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric' ,
+                                        month: 'long' , year: 'numeric' }) %>
+                                </span>
 
-            <% const gallery = (post.images && post.images.length > 0)
-                ? post.images
-                : (post.image ? [{ url: post.image }] : []);
-               const canPreview = (url) => (typeof isPreviewImage === 'function'
-                   ? isPreviewImage(url)
-                   : ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes((url.split('?')[0].split('.').pop() || '').toLowerCase()));
-               const fileExtension = (url) => {
-                   const file = (url.split('?')[0].split('#')[0].split('/').pop() || '');
-                   const ext = file.includes('.') ? file.split('.').pop() : '';
-                   return ext && ext.length <= 5 ? ext.toUpperCase() : 'ARCHIVO';
-               }; %>
-
-            <% if (gallery.length > 0) { %>
-                <div class="post-gallery <%= gallery.length === 1 ? 'post-gallery-single' : '' %>">
-                    <% gallery.forEach((img) => { %>
-                        <% if (canPreview(img.url)) { %>
-                            <a href="<%= img.url %>" target="_blank" rel="noopener" class="post-gallery-item">
-                                <img src="<%= img.url %>" alt="<%= post.title %>" class="post-detail-image" loading="lazy" decoding="async">
-                            </a>
-                        <% } else { %>
-                            <a href="<%= img.url %>" target="_blank" rel="noopener" download
-                                class="post-gallery-item post-gallery-file">
-                                <i class="fa-regular fa-file-image"></i>
-                                <span>Vista previa no disponible (<%= fileExtension(img.url) %>)</span>
-                                <small>Abrir archivo</small>
-                            </a>
-                        <% } %>
-                    <% }); %>
-                </div>
-            <% } %>
-
-            <div class="post-detail-body">
-                <%= post.content %>
-            </div>
-
-            <div class="post-reactions">
-                <button class="detail-like-btn <%= post.likedByMe ? 'is-liked' : '' %>"
-                    data-post-id="<%= post.id %>" data-liked="<%= post.likedByMe %>" title="Me gusta">
-                    <i class="<%= post.likedByMe ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
-                    <span class="like-count"><%= post.numLikes || 0 %></span>
-                    <span class="like-label">Me gusta</span>
-                </button>
-                <a href="#comentarios" class="detail-comments-link">
-                    <i class="fa-regular fa-comment"></i>
-                    <span><span class="comment-count"><%= post.numComments || 0 %></span> comentarios</span>
-                </a>
-            </div>
-
-            <section id="comentarios" class="post-comments" data-post-id="<%= post.id %>">
-                <div class="post-comments-head">
-                    <h2><i class="fa-regular fa-comments"></i> Comentarios</h2>
-                    <span class="comments-count"><%= post.numComments || 0 %></span>
-                </div>
-
-                <% if (typeof commentFeedback !== 'undefined' && commentFeedback) { %>
-                    <div class="comment-feedback <%= commentFeedback.type %>" role="status">
-                        <i class="fa-solid <%= commentFeedback.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation' %>"></i>
-                        <span><%= commentFeedback.text %></span>
                     </div>
-                <% } %>
+                </header>
 
-                <% if (user) { %>
-                    <form action="/posts/<%= post.id %>/comments" method="POST" class="comment-form">
-                        <div class="comment-form-head">
-                            <span class="comment-avatar"><%= (user.name || user.email.split('@')[0]).charAt(0).toUpperCase() %></span>
-                            <span>Comentando como <strong><%= user.name || user.email.split('@')[0] %></strong></span>
-                        </div>
-                        <textarea id="comment-content" name="content" rows="3" maxlength="1000" required
-                            placeholder="Escribe tu comentario..."></textarea>
-                        <div class="comment-form-actions">
-                            <span class="comment-hint">Máximo 1000 caracteres</span>
-                            <button type="submit" class="btn-post-primary">
-                                <i class="fa-regular fa-paper-plane"></i>
-                                <span>Publicar comentario</span>
-                            </button>
-                        </div>
-                    </form>
-                <% } else { %>
-                    <div class="comment-login-cta">
-                        <i class="fa-regular fa-user"></i>
-                        <p>Inicia sesión para dejar un comentario.</p>
-                        <a href="/login?next=<%= encodeURIComponent(currentPath) %>" class="btn-post-primary">
-                            <i class="fa-solid fa-right-to-bracket"></i>
-                            <span>Iniciar sesión</span>
-                        </a>
-                    </div>
-                <% } %>
+                <% const gallery=(post.images && post.images.length> 0)
+                    ? post.images
+                    : (post.image ? [{ url: post.image }] : []);
+                    const canPreview = (url) => (typeof isPreviewImage === 'function'
+                    ? isPreviewImage(url)
+                    : ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes((url.split('?')[0].split('.').pop() ||
+                    '').toLowerCase()));
+                    const fileExtension = (url) => {
+                    const file = (url.split('?')[0].split('#')[0].split('/').pop() || '');
+                    const ext = file.includes('.') ? file.split('.').pop() : '';
+                    return ext && ext.length <= 5 ? ext.toUpperCase() : 'ARCHIVO' ; }; %>
 
-                <% if (post.comments && post.comments.length > 0) { %>
-                    <ul class="comment-list">
-                        <% post.comments.forEach((comment) => { %>
-                            <% const commentAuthor = comment.author
-                                ? (comment.author.name || comment.author.email.split('@')[0])
-                                : 'Anónimo'; %>
-                            <% const commentAuthorSlug = comment.author && typeof profileSlugs !== 'undefined' && profileSlugs
-                                ? profileSlugs.get(comment.author.id) : null; %>
-                            <li class="comment-item" data-comment-id="<%= comment.id %>">
-                                <span class="comment-avatar"><%= commentAuthor.charAt(0).toUpperCase() %></span>
-                                <div class="comment-body">
-                                    <div class="comment-head">
-                                        <strong>
-                                            <% if (commentAuthorSlug) { %>
-                                                <a href="/profiles/<%= commentAuthorSlug %>" class="comment-author-link"
-                                                    title="Ver el perfil de <%= commentAuthor %>"><%= commentAuthor %></a>
-                                            <% } else { %>
-                                                <%= commentAuthor %>
+                        <% if (gallery.length> 0) { %>
+                            <div class="post-gallery <%= gallery.length === 1 ? 'post-gallery-single' : '' %>">
+                                <% gallery.forEach((img)=> { %>
+                                    <% if (canPreview(img.url)) { %>
+                                        <a href="<%= img.url %>" target="_blank" rel="noopener"
+                                            class="post-gallery-item">
+                                            <img src="<%= img.url %>" alt="<%= post.title %>" class="post-detail-image"
+                                                loading="lazy" decoding="async">
+                                        </a>
+                                        <% } else { %>
+                                            <a href="<%= img.url %>" target="_blank" rel="noopener" download
+                                                class="post-gallery-item post-gallery-file">
+                                                <i class="fa-regular fa-file-image"></i>
+                                                <span>Vista previa no disponible (<%= fileExtension(img.url) %>)</span>
+                                                <small>Abrir archivo</small>
+                                            </a>
                                             <% } %>
-                                        </strong>
-                                        <time datetime="<%= new Date(comment.createdAt).toISOString() %>">
-                                            <%= new Date(comment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) %>
-                                        </time>
+                                                <% }); %>
+                            </div>
+                            <% } %>
+
+                                <div class="post-detail-body">
+                                    <%= post.content %>
+                                </div>
+
+                                <div class="post-reactions">
+                                    <button class="detail-like-btn <%= post.likedByMe ? 'is-liked' : '' %>"
+                                        data-post-id="<%= post.id %>" data-liked="<%= post.likedByMe %>"
+                                        title="Me gusta">
+                                        <i class="<%= post.likedByMe ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+                                        <span class="like-count">
+                                            <%= post.numLikes || 0 %>
+                                        </span>
+                                        <span class="like-label">Me gusta</span>
+                                    </button>
+                                    <a href="#comentarios" class="detail-comments-link">
+                                        <i class="fa-regular fa-comment"></i>
+                                        <span><span class="comment-count">
+                                                <%= post.numComments || 0 %>
+                                            </span> comentarios</span>
+                                    </a>
+                                </div>
+
+                                <section id="comentarios" class="post-comments" data-post-id="<%= post.id %>">
+                                    <div class="post-comments-head">
+                                        <h2><i class="fa-regular fa-comments"></i> Comentarios</h2>
+                                        <span class="comments-count">
+                                            <%= post.numComments || 0 %>
+                                        </span>
                                     </div>
-                                    <p><%= comment.content %></p>
-                                </div>
-                            </li>
-                        <% }); %>
-                    </ul>
-                <% } else { %>
-                    <div class="comment-empty">
-                        <i class="fa-regular fa-comment-dots"></i>
-                        <p>Todavía no hay comentarios. ¡Sé el primero en opinar!</p>
+
+                                    <% if (typeof commentFeedback !=='undefined' && commentFeedback) { %>
+                                        <div class="comment-feedback <%= commentFeedback.type %>" role="status">
+                                            <i
+                                                class="fa-solid <%= commentFeedback.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation' %>"></i>
+                                            <span>
+                                                <%= commentFeedback.text %>
+                                            </span>
+                                        </div>
+                                        <% } %>
+
+                                            <% if (user) { %>
+                                                <form action="/posts/<%= post.id %>/comments" method="POST"
+                                                    class="comment-form">
+                                                    <div class="comment-form-head">
+                                                        <span class="comment-avatar">
+                                                            <%= (user.name ||
+                                                                user.email.split('@')[0]).charAt(0).toUpperCase() %>
+                                                        </span>
+                                                        <span>Comentando como <strong>
+                                                                <%= user.name || user.email.split('@')[0] %>
+                                                            </strong></span>
+                                                    </div>
+                                                    <textarea id="comment-content" name="content" rows="3"
+                                                        maxlength="1000" required
+                                                        placeholder="Escribe tu comentario..."></textarea>
+                                                    <div class="comment-form-actions">
+                                                        <span class="comment-hint">Máximo 1000 caracteres</span>
+                                                        <button type="submit" class="btn-post-primary">
+                                                            <i class="fa-regular fa-paper-plane"></i>
+                                                            <span>Publicar comentario</span>
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                <% } else { %>
+                                                    <div class="comment-login-cta">
+                                                        <i class="fa-regular fa-user"></i>
+                                                        <p>Inicia sesión para dejar un comentario.</p>
+                                                        <a href="/login?next=<%= encodeURIComponent(currentPath) %>"
+                                                            class="btn-post-primary">
+                                                            <i class="fa-solid fa-right-to-bracket"></i>
+                                                            <span>Iniciar sesión</span>
+                                                        </a>
+                                                    </div>
+                                                    <% } %>
+
+                                                        <% if (post.comments && post.comments.length> 0) { %>
+                                                            <ul class="comment-list">
+                                                                <% post.comments.forEach((comment)=> { %>
+                                                                    <% const commentAuthor=comment.author ?
+                                                                        (comment.author.name ||
+                                                                        comment.author.email.split('@')[0]) : 'Anónimo'
+                                                                        ; %>
+                                                                        <% const commentAuthorSlug=comment.author &&
+                                                                            typeof profileSlugs !=='undefined' &&
+                                                                            profileSlugs ?
+                                                                            profileSlugs.get(comment.author.id) : null;
+                                                                            %>
+                                                                            <li class="comment-item"
+                                                                                data-comment-id="<%= comment.id %>">
+                                                                                <span class="comment-avatar">
+                                                                                    <%= commentAuthor.charAt(0).toUpperCase()
+                                                                                        %>
+                                                                                </span>
+                                                                                <div class="comment-body">
+                                                                                    <div class="comment-head">
+                                                                                        <strong>
+                                                                                            <% if (commentAuthorSlug) {
+                                                                                                %>
+                                                                                                <a href="/profiles/<%= commentAuthorSlug %>"
+                                                                                                    class="comment-author-link"
+                                                                                                    title="Ver el perfil de <%= commentAuthor %>">
+                                                                                                    <%= commentAuthor %>
+                                                                                                </a>
+                                                                                                <% } else { %>
+                                                                                                    <%= commentAuthor %>
+                                                                                                        <% } %>
+                                                                                        </strong>
+                                                                                        <time
+                                                                                            datetime="<%= new Date(comment.createdAt).toISOString() %>">
+                                                                                            <%= new
+                                                                                                Date(comment.createdAt).toLocaleDateString('es-ES',
+                                                                                                { day: 'numeric' ,
+                                                                                                month: 'short' ,
+                                                                                                year: 'numeric' }) %>
+                                                                                        </time>
+                                                                                    </div>
+                                                                                    <p>
+                                                                                        <%= comment.content %>
+                                                                                    </p>
+                                                                                </div>
+                                                                            </li>
+                                                                            <% }); %>
+                                                            </ul>
+                                                            <% } else { %>
+                                                                <div class="comment-empty">
+                                                                    <i class="fa-regular fa-comment-dots"></i>
+                                                                    <p>Todavía no hay comentarios. ¡Sé el primero en
+                                                                        opinar!</p>
+                                                                </div>
+                                                                <% } %>
+                                </section>
+
+                                <footer class="post-detail-footer">
+                                    <div class="post-share-actions">
+                                        <span>Compartir este post:</span>
+                                        <button class="share-icon-btn" title="Copiar enlace"
+                                            onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!');">
+                                            <i class="fa-solid fa-link"></i>
+                                        </button>
+                                    </div>
+                                </footer>
+            </article>
+
+            <!-- Barra lateral con posts recientes -->
+            <aside class="post-detail-sidebar">
+                <div class="sidebar-widget">
+                    <div class="widget-header">
+                        <span class="widget-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                        <h4>Otros artículos</h4>
                     </div>
-                <% } %>
-            </section>
-
-            <footer class="post-detail-footer">
-                <div class="post-share-actions">
-                    <span>Compartir este post:</span>
-                    <button class="share-icon-btn" title="Copiar enlace" onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!');">
-                        <i class="fa-solid fa-link"></i>
-                    </button>
+                    <div class="recent-posts-list">
+                        <% if (typeof recentPosts !=='undefined' && recentPosts.length> 0) { %>
+                            <% recentPosts.forEach(recent=> { %>
+                                <% const authorSlug=recent.author ? (recent.author.name ||
+                                    recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-' ) : 'user' ; %>
+                                    <a href="/posts/<%= authorSlug %>/<%= recent.id %>" class="recent-post-item">
+                                        <% if (recent.image) { %>
+                                            <img src="<%= recent.image %>" alt="<%= recent.title %>"
+                                                class="recent-post-thumb" loading="lazy" decoding="async">
+                                            <% } %>
+                                                <div class="recent-post-meta">
+                                                    <h5>
+                                                        <%= recent.title %>
+                                                    </h5>
+                                                    <span class="recent-post-date"><i class="fa-regular fa-clock"></i>
+                                                        <%= new Date(recent.createdAt).toLocaleDateString('es-ES') %>
+                                                    </span>
+                                                </div>
+                                    </a>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <p class="sidebar-empty-note">No hay artículos recientes.</p>
+                                            <% } %>
+                    </div>
                 </div>
-            </footer>
-        </article>
-
-        <!-- Barra lateral con posts recientes -->
-        <aside class="post-detail-sidebar">
-            <div class="sidebar-widget">
-                <div class="widget-header">
-                    <span class="widget-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
-                    <h4>Otros artículos</h4>
-                </div>
-                <div class="recent-posts-list">
-                    <% if (typeof recentPosts !== 'undefined' && recentPosts.length > 0) { %>
-                        <% recentPosts.forEach(recent => { %>
-                            <% const authorSlug = recent.author ? (recent.author.name || recent.author.email.split('@')[0]).toLowerCase().replace(/\s+/g, '-') : 'user'; %>
-                            <a href="/posts/<%= authorSlug %>/<%= recent.id %>" class="recent-post-item">
-                                <% if (recent.image) { %>
-                                    <img src="<%= recent.image %>" alt="<%= recent.title %>" class="recent-post-thumb" loading="lazy" decoding="async">
-                                <% } %>
-                                <div class="recent-post-meta">
-                                    <h5><%= recent.title %></h5>
-                                    <span class="recent-post-date"><i class="fa-regular fa-clock"></i> <%= new Date(recent.createdAt).toLocaleDateString('es-ES') %></span>
-                                </div>
-                            </a>
-                        <% }); %>
-                    <% } else { %>
-                        <p class="sidebar-empty-note">No hay artículos recientes.</p>
-                    <% } %>
-                </div>
-            </div>
-        </aside>
+            </aside>
+        </div>
     </div>
-</div>
 
-<script src="/js/realtime.js" defer></script>
+    <script src="/js/realtime.js" defer></script>
 
-<%- include('../partials/footer') %>
+    <%- include('../partials/footer') %>
