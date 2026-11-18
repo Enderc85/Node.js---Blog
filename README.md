@@ -188,6 +188,8 @@ Cada usuario registrado tiene un perfil público propio:
 - El grid de posts muestra todos sus posts, del más reciente al más antiguo, con
   portada, fecha, me gusta y comentarios.
 - En tu propio perfil aparece el botón **Editar mi perfil**; en el resto no.
+- En el detalle de cada post, el nombre del autor y el de quien comenta enlazan a
+  su perfil público.
 - El botón de usuario de la cabecera («Mi perfil») lleva directamente a tu perfil
   público, y desde `/personal` hay un enlace para verlo.
 

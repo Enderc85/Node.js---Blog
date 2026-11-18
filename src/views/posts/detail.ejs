@@ -8,7 +8,18 @@
                 <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
                 <h1 class="post-detail-title"><%= post.title %></h1>
                 <div class="post-meta-row">
-                    <span class="meta-item"><i class="fa-regular fa-user"></i> <%= post.author ? (post.author.name || post.author.email.split('@')[0]) : 'Anónimo' %></span>
+                    <% const postAuthorName = post.author ? (post.author.name || post.author.email.split('@')[0]) : 'Anónimo'; %>
+                    <% const postAuthorSlug = post.author && typeof profileSlugs !== 'undefined' && profileSlugs
+                        ? profileSlugs.get(post.author.id) : null; %>
+                    <span class="meta-item">
+                        <i class="fa-regular fa-user"></i>
+                        <% if (postAuthorSlug) { %>
+                            <a href="/profiles/<%= postAuthorSlug %>" class="meta-author-link"
+                                title="Ver el perfil de <%= postAuthorName %>"><%= postAuthorName %></a>
+                        <% } else { %>
+                            <%= postAuthorName %>
+                        <% } %>
+                    </span>
                     <span class="meta-item"><i class="fa-regular fa-calendar"></i> <%= new Date(post.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
                     <span class="meta-item"><i class="fa-regular fa-heart"></i> <span class="like-count"><%= post.numLikes || 0 %></span> Me gusta</span>
                 </div>
@@ -108,11 +119,20 @@
                             <% const commentAuthor = comment.author
                                 ? (comment.author.name || comment.author.email.split('@')[0])
                                 : 'Anónimo'; %>
+                            <% const commentAuthorSlug = comment.author && typeof profileSlugs !== 'undefined' && profileSlugs
+                                ? profileSlugs.get(comment.author.id) : null; %>
                             <li class="comment-item" data-comment-id="<%= comment.id %>">
                                 <span class="comment-avatar"><%= commentAuthor.charAt(0).toUpperCase() %></span>
                                 <div class="comment-body">
                                     <div class="comment-head">
-                                        <strong><%= commentAuthor %></strong>
+                                        <strong>
+                                            <% if (commentAuthorSlug) { %>
+                                                <a href="/profiles/<%= commentAuthorSlug %>" class="comment-author-link"
+                                                    title="Ver el perfil de <%= commentAuthor %>"><%= commentAuthor %></a>
+                                            <% } else { %>
+                                                <%= commentAuthor %>
+                                            <% } %>
+                                        </strong>
                                         <time datetime="<%= new Date(comment.createdAt).toISOString() %>">
                                             <%= new Date(comment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) %>
                                         </time>
