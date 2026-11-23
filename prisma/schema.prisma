@@ -20,6 +20,7 @@ model User {
   avatar         String?
   featuredPostId Int?
   role           Role     @default(USER)
+  active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   posts          Post[]

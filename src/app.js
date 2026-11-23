@@ -33,10 +33,13 @@ app.use(async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.SECRET);
         const user = await prisma.user.findUnique({
             where: { id: decoded.id },
-            select: { id: true, email: true, name: true, role: true, bio: true, avatar: true, featuredPostId: true }
+            select: { id: true, email: true, name: true, role: true, bio: true, avatar: true, featuredPostId: true, active: true }
         });
 
-        if (user) {
+        // Las cuentas desactivadas pierden la sesión en la siguiente petición.
+        if (user && user.active === false) {
+            res.clearCookie('token');
+        } else if (user) {
             req.user = user;
             res.locals.user = user;
         } else {

@@ -13,6 +13,7 @@
     "change-password": "node scripts/change-password.js",
     "migrate-media": "node scripts/migrate-uploads-to-db.js",
     "make-admin": "node scripts/make-admin.js",
+    "add-user-active": "node scripts/add-user-active.js",
     "add-comment-replies": "node scripts/add-comment-replies.js"
   },
   "repository": {

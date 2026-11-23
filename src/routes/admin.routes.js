@@ -11,5 +11,8 @@ router.get('/', adminController.dashboard);
 router.post('/posts/delete', adminController.deletePost);
 router.post('/images/delete', adminController.deletePostImage);
 router.post('/library/delete', adminController.deleteLibraryImage);
+router.post('/users/deactivate', adminController.deactivateUser);
+router.post('/users/reactivate', adminController.reactivateUser);
+router.post('/users/delete', adminController.deleteUser);
 
 module.exports = router;
