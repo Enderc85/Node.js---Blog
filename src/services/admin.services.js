@@ -3,6 +3,7 @@ const path = require('path');
 const prisma = require('../config/db');
 const { isPreviewableImage } = require('./post.services');
 const { isMediaUrl, deleteMediaByUrl } = require('./media.services');
+const { getProfileSlugMap } = require('./profile.services');
 
 const UPLOAD_URL_PREFIX = '/uploads/posts/';
 const UPLOAD_DIR = path.join(__dirname, '../../public/uploads/posts');
@@ -54,7 +55,7 @@ const authorSlug = (author) => {
 // Devuelve los posts publicados y todas las imágenes que se muestran en la web:
 // portadas de posts + galerías + la biblioteca Images.
 const getDashboardData = async () => {
-    const [posts, library, totalUsers] = await Promise.all([
+    const [posts, library, users, slugs] = await Promise.all([
         prisma.post.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
@@ -64,7 +65,20 @@ const getDashboardData = async () => {
             }
         }),
         prisma.images.findMany({ orderBy: { id: 'desc' } }),
-        prisma.user.count()
+        prisma.user.findMany({
+            orderBy: [{ role: 'desc' }, { createdAt: 'asc' }],
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                role: true,
+                active: true,
+                createdAt: true,
+                _count: { select: { posts: true, comments: true, likes: true } }
+            }
+        }),
+        getProfileSlugMap()
     ]);
 
     const postImages = [];
@@ -122,16 +136,38 @@ const getDashboardData = async () => {
         imagesCount: post.images.length
     }));
 
+    const usersList = users.map((user) => {
+        const name = user.name || user.email.split('@')[0];
+
+        return {
+            id: user.id,
+            name,
+            initial: name.charAt(0).toUpperCase(),
+            email: user.email,
+            avatar: user.avatar || null,
+            role: user.role,
+            active: user.active,
+            createdAt: user.createdAt,
+            profileUrl: `/profiles/${slugs.get(user.id)}`,
+            postsCount: user._count.posts,
+            commentsCount: user._count.comments,
+            likesCount: user._count.likes
+        };
+    });
+
     return {
         posts: postsList,
         postImages,
         library: libraryImages,
+        users: usersList,
         stats: {
             posts: posts.length,
             postsWithImages: posts.filter((post) => post.image || post.images.length > 0).length,
             postImages: postImages.length,
             libraryImages: library.length,
-            users: totalUsers
+            users: users.length,
+            usersActive: users.filter((user) => user.active).length,
+            usersInactive: users.filter((user) => !user.active).length
         }
     };
 };
@@ -220,9 +256,111 @@ const deletePost = async (postId) => {
     return { ok: true, title: post.title };
 };
 
+// Activa o desactiva una cuenta. Un usuario desactivado no puede iniciar
+// sesión y su sesión actual deja de ser válida en la siguiente petición.
+const setUserActive = async (userId, active) => {
+    const id = Number(userId);
+    if (!Number.isInteger(id) || id <= 0) return { ok: false, reason: 'invalid' };
+
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, email: true, active: true }
+    });
+
+    if (!user) return { ok: false, reason: 'notfound' };
+
+    if (user.active !== active) {
+        await prisma.user.update({ where: { id }, data: { active } });
+    }
+
+    return {
+        ok: true,
+        already: user.active === active,
+        name: user.name || user.email.split('@')[0]
+    };
+};
+
+// Elimina una cuenta por completo:
+// - sus posts (con galería e imágenes) usando el mismo flujo del panel;
+// - sus comentarios y me gusta caen en cascada;
+// - se recalculan los contadores de los posts afectados.
+// No permite que un administrador se elimine a sí mismo.
+const deleteUser = async (userId, currentUserId) => {
+    const id = Number(userId);
+    if (!Number.isInteger(id) || id <= 0) return { ok: false, reason: 'invalid' };
+    if (Number(currentUserId) === id) return { ok: false, reason: 'self' };
+
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            posts: { select: { id: true } }
+        }
+    });
+
+    if (!user) return { ok: false, reason: 'notfound' };
+
+    const ownPostIds = new Set(user.posts.map((post) => post.id));
+
+    // Comentarios y me gusta del usuario en posts que NO se van a borrar.
+    const [commentedPosts, likedPosts] = await Promise.all([
+        prisma.comment.findMany({
+            where: { authorId: id },
+            select: { postId: true },
+            distinct: ['postId']
+        }),
+        prisma.like.findMany({
+            where: { userId: id },
+            select: { postId: true },
+            distinct: ['postId']
+        })
+    ]);
+
+    const affectedPostIds = new Set(
+        [...commentedPosts, ...likedPosts]
+            .map((row) => row.postId)
+            .filter((postId) => !ownPostIds.has(postId))
+    );
+
+    // Los posts se eliminan con el flujo normal (borra imágenes del disco/BD).
+    for (const postId of ownPostIds) {
+        await deletePost(postId);
+    }
+
+    // El usuario arrastra en cascada sus comentarios y me gusta restantes.
+    await prisma.user.delete({ where: { id } });
+
+    // Mantener numComments / numLikes correctos en los posts afectados.
+    for (const postId of affectedPostIds) {
+        const [numComments, numLikes] = await Promise.all([
+            prisma.comment.count({ where: { postId } }),
+            prisma.like.count({ where: { postId } })
+        ]);
+
+        await prisma.post.updateMany({
+            where: { id: postId },
+            data: { numComments, numLikes }
+        });
+    }
+
+    // La foto de perfil puede ser local o de /media; se borra si ya no se usa.
+    await removeUnusedFile(user.avatar);
+
+    return {
+        ok: true,
+        name: user.name || user.email.split('@')[0],
+        postsDeleted: ownPostIds.size
+    };
+};
+
 module.exports = {
     getDashboardData,
     deletePost,
     deletePostImage,
-    deleteLibraryImage
+    deleteLibraryImage,
+    setUserActive,
+    deleteUser
 };

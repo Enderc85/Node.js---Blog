@@ -145,7 +145,30 @@ Cada usuario registrado tiene un perfil público propio:
 El panel de administración está disponible en `/admin` y solo pueden entrar
 usuarios con rol `ADMIN`. Desde él se pueden ver y eliminar todas las imágenes
 de los posts (portadas y galerías) y las de la biblioteca de imágenes, además de
-borrar posts completos.
+borrar posts completos y gestionar las cuentas de usuario.
+
+### Gestionar usuarios
+
+La sección **Usuarios** del panel muestra cada cuenta con su rol, estado,
+actividad (posts, comentarios y me gusta) y su perfil público. Las acciones son:
+
+- **Desactivar**: la cuenta no puede iniciar sesión y sus sesiones abiertas dejan
+  de ser válidas en la siguiente petición. Sus posts, comentarios y perfil
+  siguen visibles. Se puede volver a **Reactivar** en cualquier momento.
+- **Eliminar**: borra la cuenta junto con sus posts (e imágenes), comentarios y
+  me gusta, y recalcula los contadores de los posts afectados. No se puede
+  deshacer.
+- No se puede desactivar ni eliminar la propia cuenta desde el panel, para no
+  quedarte sin acceso de administrador.
+
+La columna `active` de `users` se añade con:
+
+```bash
+npm run add-user-active
+```
+
+Es idempotente y usa el cliente de la app (443), así que funciona aunque el
+puerto 5432 esté bloqueado. Con `prisma db push` desde casa también se crea.
 
 ### Configurar un administrador
 

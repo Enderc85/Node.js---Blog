@@ -17,7 +17,7 @@
             <div>
                 <span class="admin-badge"><i class="fa-solid fa-shield-halved"></i> Administración</span>
                 <h1>Contenido del sitio</h1>
-                <p>Gestiona los posts publicados y revisa o elimina las imágenes que no deberían estar visibles.</p>
+                <p>Gestiona los posts, las imágenes y las cuentas de usuario del sitio.</p>
             </div>
             <a href="/" class="btn-post-secondary admin-back-link">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -60,6 +60,108 @@
                 <strong><%= stats.users %></strong>
                 <span>Usuarios</span>
             </div>
+        </section>
+
+        <section class="admin-section" id="usuarios">
+            <div class="admin-section-head">
+                <h2><i class="fa-solid fa-users"></i> Usuarios</h2>
+                <span class="admin-count"><%= stats.users %></span>
+            </div>
+
+            <p class="admin-section-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                Una cuenta desactivada no puede iniciar sesión, pero su perfil y sus posts siguen visibles.
+                Al eliminarla se borran también sus posts, comentarios y me gusta.
+            </p>
+
+            <% if (users.length === 0) { %>
+                <div class="admin-empty">
+                    <i class="fa-solid fa-users"></i>
+                    <p>No hay usuarios registrados.</p>
+                </div>
+            <% } else { %>
+                <div class="admin-post-list">
+                    <% users.forEach((account) => { %>
+                        <% const isSelf = user && user.id === account.id; %>
+                        <article class="admin-post-row admin-user-row">
+                            <span class="admin-user-avatar">
+                                <% if (account.avatar) { %>
+                                    <img src="<%= account.avatar %>" alt="Foto de perfil de <%= account.name %>"
+                                        loading="lazy" onerror="this.style.display='none';">
+                                <% } else { %>
+                                    <%= account.initial %>
+                                <% } %>
+                            </span>
+
+                            <div class="admin-post-main">
+                                <div class="admin-user-head">
+                                    <a href="<%= account.profileUrl %>" class="admin-post-title" target="_blank"
+                                        rel="noopener"><%= account.name %></a>
+                                    <span class="admin-user-tags">
+                                        <% if (account.role === 'ADMIN') { %>
+                                            <span class="admin-tag admin-tag-cover">Admin</span>
+                                        <% } %>
+                                        <span class="admin-tag <%= account.active ? 'admin-tag-local' : 'admin-tag-inactive' %>">
+                                            <%= account.active ? 'Activo' : 'Desactivado' %>
+                                        </span>
+                                        <% if (isSelf) { %>
+                                            <span class="admin-tag admin-tag-self">Tú</span>
+                                        <% } %>
+                                    </span>
+                                </div>
+
+                                <span class="admin-image-meta">
+                                    <i class="fa-regular fa-envelope"></i> <%= account.email %>
+                                    <span class="admin-meta-sep">·</span>
+                                    <i class="fa-regular fa-calendar"></i> <%= formatDate(account.createdAt) %>
+                                </span>
+
+                                <div class="admin-post-stats">
+                                    <span><i class="fa-regular fa-newspaper"></i> <%= account.postsCount %> posts</span>
+                                    <span><i class="fa-regular fa-comment"></i> <%= account.commentsCount %> comentarios</span>
+                                    <span><i class="fa-regular fa-heart"></i> <%= account.likesCount %> me gusta</span>
+                                </div>
+                            </div>
+
+                            <div class="admin-user-actions">
+                                <% if (isSelf) { %>
+                                    <span class="admin-user-note">
+                                        <i class="fa-solid fa-lock"></i> Tu cuenta
+                                    </span>
+                                <% } else { %>
+                                    <% if (account.active) { %>
+                                        <form action="/admin/users/deactivate" method="POST"
+                                            onsubmit="return confirm('¿Desactivar esta cuenta? No podrá iniciar sesión hasta que la reactives.');">
+                                            <input type="hidden" name="userId" value="<%= account.id %>">
+                                            <button type="submit" class="admin-action-btn admin-action-btn--warn">
+                                                <i class="fa-solid fa-user-slash"></i>
+                                                <span>Desactivar</span>
+                                            </button>
+                                        </form>
+                                    <% } else { %>
+                                        <form action="/admin/users/reactivate" method="POST">
+                                            <input type="hidden" name="userId" value="<%= account.id %>">
+                                            <button type="submit" class="admin-action-btn">
+                                                <i class="fa-solid fa-user-check"></i>
+                                                <span>Reactivar</span>
+                                            </button>
+                                        </form>
+                                    <% } %>
+
+                                    <form action="/admin/users/delete" method="POST"
+                                        onsubmit="return confirm('¿Eliminar este usuario? Se borrarán también sus posts, comentarios y me gusta. Esta acción no se puede deshacer.');">
+                                        <input type="hidden" name="userId" value="<%= account.id %>">
+                                        <button type="submit" class="admin-action-btn admin-action-btn--danger">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                            <span>Eliminar</span>
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </article>
+                    <% }); %>
+                </div>
+            <% } %>
         </section>
 
         <section class="admin-section">

@@ -141,7 +141,16 @@ const login = async (req, res) => {
             return res.status(401).json({ message: errorMsg });
         }
 
-        // 4. Generar token JWT y enviarlo como cookie
+        // 4. Las cuentas desactivadas no pueden iniciar sesión
+        if (user.active === false) {
+            const errorMsg = 'Tu cuenta está desactivada. Contacta con un administrador.';
+            if (isFormSubmit) {
+                return res.status(403).render('auth/login', { title: 'Iniciar Sesión', error: errorMsg, email, next });
+            }
+            return res.status(403).json({ message: errorMsg });
+        }
+
+        // 5. Generar token JWT y enviarlo como cookie
         const token = createToken(user);
 
         res.cookie('token', token, {
@@ -204,6 +213,10 @@ const verify = async (req, res) => {
 
         if (!user) {
             return res.status(401).json({ message: 'Usuario no encontrado' });
+        }
+
+        if (user.active === false) {
+            return res.status(401).json({ message: 'La cuenta está desactivada' });
         }
 
         res.status(200).json({
